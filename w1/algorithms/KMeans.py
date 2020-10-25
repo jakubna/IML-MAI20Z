@@ -4,7 +4,7 @@ import random as rd
 from scipy.spatial import distance
 
 class KMeans:
-    def __init__(self, k:int, max_it=100, seed=1, tol=1e-4):
+    def __init__(self, k: int, max_it=100, seed=1, tol=1e-5):
         """
         :param k: Number of Clusters
         :param max_it: Maximum number of iterations if hasn't reached convergence yet.
@@ -13,21 +13,19 @@ class KMeans:
         """
         if k < 1:
             raise ValueError('K must be a positive number')
-        
+
         self.k = k
         self.max_it = max_it
         self.seed = seed
         self.tol = tol
         self.n_it = 0
-        self.re_dis = 1
         self.metric = 'euclidean'
-        self.cost_function_type = 'mean'
         self.previous_centroids = None
         self.X = None
         self.centroids = None
         self.nearest = None
         self.inertia = None
-        
+
     def fit(self, X: np.ndarray):
         """
         Compute cluster centers and predict cluster index for each sample.
@@ -37,30 +35,25 @@ class KMeans:
         self.X = X
         sse = []
         # Initialize centroids
-        init_centroids = np.random.choice(range(self.X.shape[0]), size=self.k, replace=False)
-        self.centroids = self.X[init_centroids, :]
-        
-        
-        while self.re_dis > self.tol and self.n_it < self.max_it:
-            self.re_dis = 0
+        self._init_centroids()
+
+        while True:
             self.n_it += 1
-            
             distances = self._distances(X)
             labels, self.nearest, nearest_ids = self._get_nearest(X, distances)
             self.previous_centroids = self.centroids.copy()
-            self._shift_centroids()
-            self.re_dis = self._calculate_cost()
+            self._update_centroids()
+            np_labels = np.array(labels)
+            # inertia calculus
+            for act in range(0, self.k):
+                index = np.where(np_labels == act)[0]
+                cluster_x = self.X[index, :]
+                se = np.sum(np.linalg.norm(cluster_x - self.centroids[act]))
+                sse.append(se)
+            self.inertia = np.min(sse)
 
-        # inertia calculus
-        np_labels = np.array(labels)
-        for act in range(0, self.k):
-            index = np.where(np_labels == act)[0]
-            cluster_x = self.X[index, :]
-            se = np.sum(np.linalg.norm(cluster_x - self.centroids[act]))
-            sse.append(se)
-        self.inertia = np.min(sse)
-
-
+            if self._check_convergence():
+                break
 
     def predict(self, X: np.ndarray):
         """
@@ -75,7 +68,7 @@ class KMeans:
         labels, self.nearest, nearest_ids = self._get_nearest(X, distances)
 
         return labels
-        
+
     def fit_predict(self, X: np.ndarray):
         """
         Fit the model with data and return assigned labels.
@@ -83,18 +76,24 @@ class KMeans:
         :return: Cluster indexes assigned to each row of X.
         """
         self.fit(X)
-        return self.predict(X) 
+        return self.predict(X)
 
-    def _calculate_cost(self):
+    def _init_centroids(self):
+        """Initialize centroids"""
+        init_centroids = np.random.choice(range(self.X.shape[0]), size=self.k, replace=False)
+        self.centroids = self.X[init_centroids, :]
+
+    def _calculate_sd(self):
         """
         Calculate the distance between old centroids and new ones (SD).
         :return: SD.
         """
         cost = 0
         for k in range(self.k):
-            cost+= distance.cdist(np.array([self.centroids[k]]), np.array([self.previous_centroids[k]]), metric=self.metric)[0][0]
+            cost += \
+            distance.cdist(np.array([self.centroids[k]]), np.array([self.previous_centroids[k]]), metric=self.metric)[
+                0][0]
         return cost
-
 
     def _distances(self, X: np.ndarray):
         """
@@ -109,7 +108,7 @@ class KMeans:
                 distances[centroid_id, row_id] = self._calculate_distance(centroid, row)
 
         return distances
-    
+
     def _calculate_distance(self, x: np.ndarray, y: np.ndarray):
         """
         Calculate distance between 2 elements using the metric depending on the algorithm ('euclidean' or 'cityblock').
@@ -118,7 +117,7 @@ class KMeans:
         :return: Distance between both vectors using the specified metric.
         """
         return distance.cdist(np.array([x]), np.array([y]), metric=self.metric)[0][0]
-    
+
     def _get_nearest(self, X: np.ndarray, distances: np.ndarray):
         """
         Compute the distance for each dataset instance to each centroid.
@@ -141,13 +140,20 @@ class KMeans:
 
         return clusters, nearest, nearest_id
 
-    def _shift_centroids(self):
+    def _update_centroids(self):
         """Compute the new centroid for each cluster using method depending on algorithm."""
         for k in range(self.k):
             if len(self.nearest[k]) > 0:
-                if self.cost_function_type =="median":
-                    self.centroids[k, :] = np.median(np.array(self.nearest[k]), axis=0)
-                elif self.cost_function_type == "mean":
-                    self.centroids[k, :] = np.mean(np.array(self.nearest[k]), axis=0)
-        
-    
+                self.centroids[k, :] = np.mean(np.array(self.nearest[k]), axis=0)
+
+    def _check_convergence(self):
+        """Check the termination criterions"""
+        if self.n_it >= self.max_it:
+            return True
+        elif self._calculate_sd() < self.tol:
+            return True
+        else:
+            return False
+
+
+
