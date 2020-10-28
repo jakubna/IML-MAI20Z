@@ -3,6 +3,7 @@ import numpy as np
 import scipy.spatial
 
 def evaluate_supervised(labels_true, labels_predicted):
+    """ this functions is to compare the predicted results with the real ones (supervised methods) in some different metrics"""    
     contingency_matrix = cluster.contingency_matrix(labels_true, labels_predicted)
     metrics_from_contingency_matrix = get_metrics_from_mat(contingency_matrix)
     supervised_scores = dict(adjusted_mutual_info_score=adjusted_mutual_info_score(labels_true, labels_predicted, 'arithmetic'),
@@ -15,6 +16,9 @@ def evaluate_supervised(labels_true, labels_predicted):
     return supervised_scores
 
 def evaluate_unsupervised(X, labels_predicted):
+     """ this functions is to evaluate the predicted results (unsupervised methods) by three metrics
+          X : normalized input dataset
+          """    
     unsupervised_scores = dict(calinski_harabasz_score=calinski_harabasz_score(X, labels_predicted),
                    davies_bouldin_score=davies_bouldin_score(X, labels_predicted),
                    silhouette_score=silhouette_score(X, labels_predicted))
@@ -22,6 +26,8 @@ def evaluate_unsupervised(X, labels_predicted):
 
 
 def evaluate_soft_partitions(X, labels_true, lables_predicted, centroids):
+    """ this functions is toevaluate the predicted results by soft partitions methods
+             X : normalized input dataset"""  
     contingency_matrix = cluster.contingency_matrix(labels_true, labels_predicted)
     #calculations for xie_beni
     centroids_dist = scipy.spatial.distance.cdist(centroids, centroids)**2
