@@ -2,6 +2,8 @@ import numpy as np
 from sklearn.metrics import *
 from typing import Type, List
 from evaluation.evaluate import *
+from algorithms.KMeans import KMeans
+from algorithms.KMedians import KMedians
 
     """
     Optimize K value for the same data, algorithm and metric.
@@ -15,13 +17,13 @@ from evaluation.evaluate import *
                                                                 davies_bouldin_score,silhouette_score,normalized_partition_coefficient,
                                                                 partition_entropy, xie_beni
     :param k_values: List of `K` values to test.
-    :param goal: `max` or `min` the metric.
+    :param goal: `max` or `min` the metric (maximaze or minimize the metric)
     :return: list containg k values and scores
     """
 def optimize(X: np.ndarray,y:np.ndarray, algorithm: Type[KMeans], algorithm_params: dict, metric: str, k_values: List[int], goal: str):
     results = []
-    assert goal in ['max', 'min']
-    for k in k_values:
+    assert goal in ['max', 'min'] 
+    for k in k_values: #iterate for every k in list
         model = algorithm(k=k,algorithm_params)
         model(X).fit
         y_pred = model.predict(X)
