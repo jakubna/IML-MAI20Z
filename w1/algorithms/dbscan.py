@@ -5,6 +5,9 @@ from sklearn.cluster import DBSCAN
 from sklearn.neighbors import NearestNeighbors
 
 def find_eps(X):
+  """ this function aims to plot the epsilon by calculating the distance to the nearest two points and index.
+      the optimal value will be found at the point of maximum curvature  
+      X: normalized input variables"""
   neigh = NearestNeighbors(n_neighbors=2)
   nbrs = neigh.fit(X)
   distances, indices = nbrs.kneighbors(X)
@@ -13,23 +16,31 @@ def find_eps(X):
   plt.plot(distances)
   
 def dbscan_(X, df, eps, min_s):
+  """ this functions aims to clusterize the dataset using sklearn DBSCAN using different metrics and algorithms 
+        and returns the original dataframe with labels of each metric-algorithm 
+                     and a dataframe with results (columns = metric, algorithm, number of clusters, number of estimated noise points
+      X: normalized input variables
+      df: original dataframe with variables and true labels
+      eps: optimal epsilon (obtained by the graph using find_eps function
+      min_s: minimal number of samples in one cluster """
+        
   metrics_=['euclidean','cosine','l1','l2','manhattan']
   algo =['auto', 'ball_tree', 'kd_tree', 'brute']
   metrics_list=[]
   algorithms_list=[]
   clusters_list=[]
   noise_list=[]
-  for metric in metrics_:
+  for metric in metrics_: #iterating to combine every metric with all algorithms
       for method in algo:
           ma=metric+method
-          if ma != 'cosineball_tree' and  ma != 'cosinekd_tree':
+          if ma != 'cosineball_tree' and  ma != 'cosinekd_tree': #cosine can not deal with ball_tree and kd_tree algorithms
               db = DBSCAN(eps=eps,min_samples=min_s,metric=metric, algorithm=method).fit(X)
               core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
               core_samples_mask[db.core_sample_indices_] = True
               labels = db.labels_
               df[metric+'-'+method]=labels
               labels_true=Y
-              n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
+              n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0) #taking off the noise points
               n_noise_ = list(labels).count(-1)
               metrics_list.append(metric)
               algorithms_list.append(method)
