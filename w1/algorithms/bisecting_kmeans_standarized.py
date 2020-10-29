@@ -3,26 +3,8 @@ from w1.algorithms.KMeans import KMeans
 from scipy.spatial import distance
 
 
-def sse(cluster):
-    """
-    calculate the error of the cluster.
-    :param cluster:  2D data array of size (rows, features).
-    :return: sum of errors
-    """
-    centroid = np.mean(cluster, 0)
-    errors = np.linalg.norm(cluster - centroid, ord=2, axis=1)
-    return np.sum(errors)
-
-
 class BisectingKMeans:
     def __init__(self, k: int, max_it=100, seed=1, tol=1e-5):
-        """
-        :param k: Number of Clusters
-        :param max_it: Maximum number of iterations if hasn't reached convergence yet (for KMeans fit)
-        :param seed: Fixed seed to allow reproducibility (for KMeans fit)
-        :param tol: Relative tolerance with regards difference in the cluster centers of two consecutive iterations to
-        declare convergence (for KMeans fit).
-        """
         if k < 1:
             raise ValueError('K must be a positive number')
 
@@ -47,17 +29,19 @@ class BisectingKMeans:
             cluster = clusters.pop(max_sse_i)
             # split in 2 clusters using k_means
             kmeans = KMeans(k=2, max_it=self.max_it, seed=self.seed, tol=self.tol)
-            print(cluster)
             kmeans.fit(cluster)
             two_labels = kmeans.predict(cluster)
             # use the labels to split the data according to clusters
             two_clusters = []
             cluster_x = []
-            for act in range(0, 2):
+            for act in range(2):
+                index=[]
+                for i in range(len(two_labels)-1):
                 # select the index of all points in the same cluster
-                index = np.where(two_labels == act)[0]
+                    if  two_labels[i] == act:
+                        index.append(i)
                 cluster_x = cluster[index, :]
-            two_clusters.append(cluster_x)
+                two_clusters.append(cluster_x)
             # append the clusters list
             clusters.extend(two_clusters)
 
@@ -125,3 +109,7 @@ class BisectingKMeans:
                                                                 metric=self.metric)[0][0]
 
         return distances
+    def sse(cluster):
+        centroid = np.mean(cluster, 0)
+        errors = np.linalg.norm(cluster - centroid, ord=2, axis=1)
+        return np.sum(errors)
