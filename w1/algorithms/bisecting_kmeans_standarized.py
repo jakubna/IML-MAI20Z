@@ -72,8 +72,8 @@ class BisectingKMeans:
         if self.centroids is None:
             raise Exception('Fit the model with some data before running a prediction')
 
-        distances = KMeans._distances(x)
-        labels, self.nearest, nearest_ids = KMeans._get_nearest(x, distances)
+        distances = self._distances(x)
+        labels, self.nearest, nearest_ids = self._get_nearest(x, distances)
 
         return labels
 
@@ -85,3 +85,39 @@ class BisectingKMeans:
         """
         self.fit(x)
         return self.predict(x)
+    
+    def _distances(self, X: np.ndarray):
+        """
+        Calculate distance from each point of the dataset to each cluster.
+        :param X: 2D data array of size (rows, features).
+        :return: Distance matrix of shape (K, number of points)
+        """
+        distances = np.zeros(shape=(self.k, X.shape[0]))
+
+        for centroid_id, centroid in enumerate(self.centroids):
+            for row_id, row in enumerate(X):
+                distances[centroid_id, row_id] = distance.cdist(np.array([centroid]), np.array([row]), metric=self.metric)[0][0]
+             
+       return distances
+
+def _get_nearest(self, X: np.ndarray, distances: np.ndarray):
+        """
+        Compute the distance for each dataset instance to each centroid.
+        :param X: 2D data array of size (rows, features).
+        :param distances: 2D vector of distances between centroids and points.
+        :return: Cluster indexes assigned to each observation (labels for each point).
+                 List of nearest observations for each cluster.
+                 List of nearest observations index for each cluster.
+        """
+        clusters = []
+        nearest = [[] for _ in range(self.k)]
+        nearest_id = [[] for _ in range(self.k)]
+
+        for row_id, row in enumerate(X):
+            cluster_id = int(np.argmin(distances[:, row_id]))
+
+            clusters.append(cluster_id)
+            nearest[cluster_id].append(row)
+            nearest_id[cluster_id].append(row_id)
+
+        return clusters, nearest, nearest_id
