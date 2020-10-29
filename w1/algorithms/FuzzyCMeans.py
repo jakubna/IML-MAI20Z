@@ -1,8 +1,6 @@
 import numpy as np
-import random as rd
-from scipy.spatial import distance
+from w1.algorithms.KMeans import KMeans
 
-from algorithms.KMeans import KMeans
 
 class FuzzyCMeans(KMeans):
     def __init__(self, m=2, epsilon=0.01, **kwargs):
@@ -14,25 +12,25 @@ class FuzzyCMeans(KMeans):
         self.m = m
         self.epsilon = epsilon
 
-    def predict(self, X: np.ndarray):
+    def predict(self, x: np.ndarray):
         """
         Override function
-        :param X: 2D data array of size (rows, features).
+        :param x: 2D data array of size (rows, features).
         :return: Membership matrix,
                  Centroids parameters,
                  Cluster indexes assigned to each row of X.
         """
-        crisp_labels = self._crisp_predict(X)
+        crisp_labels = self._crisp_predict(x)
         return self.u, self.centroids, crisp_labels
 
-    def _crisp_predict(self, X: np.ndarray):
+    def _crisp_predict(self, x: np.ndarray):
         """
         Getting the clusters
-        :param X: 2D data array of size (rows, features).
+        :param x: 2D data array of size (rows, features).
         :return: Cluster indexes assigned to each row of X.
         """
         cluster_labels = list()
-        for i in range(X.shape[0]):
+        for i in range(x.shape[0]):
             max_val, idx = max((val, idx) for (idx, val) in enumerate(self.u[:, i]))
             cluster_labels.append(idx)
         return cluster_labels
