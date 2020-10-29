@@ -2,6 +2,25 @@ from sklearn.metrics import *
 import numpy as np
 import scipy.spatial
 
+def get_metrics_from_mat(contingency_matrix):
+            """
+        Function to compute precision, recall, f1 score and accuracy
+        :param contingency_matrix: 2D data array of size.
+        :return: precision (list)
+                 recall (list)
+                 f1 score (list)
+                 accuracy
+        """
+    
+    precision=[]
+    recall=[]
+    for i in range(len(contingency_matrix):
+        precision.append(contingency_matrix[i][i]/sum(contingency_matrix[:,i]))
+        recall.append(contingency_matrix[i][i]/sum(contingency_matrix[i,:]))
+    f1score = list(2*((np.array(precision)*np.array(recall))/(np.array(precision)+np.array(recall))))
+    accuracy = np.trace(contingency_matrix) / np.sum(contingency_matrix)
+    return dict(accuracy=accuracy, precision = precision, recall=recall, f1score=f1score)
+
 def evaluate_supervised(labels_true, labels_predicted):
     """ 
     this functions is to compare the predicted results with the real ones (supervised methods) in some different metrics
