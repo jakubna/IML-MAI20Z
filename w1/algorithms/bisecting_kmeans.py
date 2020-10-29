@@ -27,7 +27,7 @@ class Bisecting_KMeans:
              #select the cluster and take it off from the clusters list
              cluster = clusters.pop(max_sse_i)
              #split in 2 clusters using k_means
-             kmeans = k_means(k=2, max_it, seed, tol)
+             kmeans = KMeans(k=2, max_it, seed, tol)
              kmeans.fit(cluster)
              two_labels = kmeans.predict(cluster)
              #use the labels to split the data according to clusters
