@@ -14,10 +14,13 @@ def get_metrics_from_mat(contingency_matrix):
     
     precision=[]
     recall=[]
+    f1score =[]
     for i in range(len(contingency_matrix):
-        precision.append(contingency_matrix[i][i]/sum(contingency_matrix[:,i]))
-        recall.append(contingency_matrix[i][i]/sum(contingency_matrix[i,:]))
-    f1score = list(2*((np.array(precision)*np.array(recall))/(np.array(precision)+np.array(recall))))
+        p=(contingency_matrix[i][i]/sum(contingency_matrix[:,i])
+        r=contingency_matrix[i][i]/sum(contingency_matrix[i,:])
+        precision.append(p)
+        recall.append(r)
+        f1score.append(2*((p*r)/(p+r)))
     accuracy = np.trace(contingency_matrix) / np.sum(contingency_matrix)
     return dict(accuracy=accuracy, precision = precision, recall=recall, f1score=f1score)
 
