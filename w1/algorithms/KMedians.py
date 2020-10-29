@@ -1,9 +1,6 @@
-import pandas as pd
 import numpy as np
-import random as rd
-from scipy.spatial import distance
+from w1.algorithms.KMeans import KMeans
 
-from algorithms.KMeans import KMeans
 
 class KMedians(KMeans):
     def __init__(self, **kwargs):
