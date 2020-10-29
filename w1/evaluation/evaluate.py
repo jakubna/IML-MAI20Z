@@ -56,20 +56,18 @@ def evaluate_unsupervised(X, labels_predicted):
     return unsupervised_scores
 
 
-def evaluate_soft_partitions(X, labels_true, lables_predicted, centroids):
+def evaluate_soft_partitions(X, membership_matrix, centroids):
     """ 
     this functions is toevaluate the predicted results by soft partitions methods
     :param X : 2D data array of size (rows, features).
-    :param labels_true: 1D data array of size (true labels).
-    :param labels_predicted: 1D data array of size (predicted labels).
+    :param membership_matrix:  membership matrix, with shape (# clusters, # rows)
     :param centroids: 2d data array of size (k (number of clusters), features)
     """  
-            
-    contingency_matrix = cluster.contingency_matrix(labels_true, labels_predicted)
+
     #calculations for xie_beni
     centroids_dist = scipy.spatial.distance.cdist(centroids, centroids)**2
     centroids_dist[centroids_dist == 0.0] = np.inf  
-    scores_soft_partitions = dict(normalized_partition_coefficient=(np.sum(contingency_matrix ** 2) / contingency_matrix.shape[1] - 1 / contingency_matrix.shape[0]) / (1 - 1 / contingency_matrix.shape[0]),
-               partition_entropy=-np.sum(contingency_matrix * np.log(contingency_matrix) / contingency_matrix.shape[1]),
-               xie_beni=np.sum((contingency_matrix**2).T*(scipy.spatial.distance.cdist(X, centroids)**2))/(X.shape[0]*np.min(centroids_dist)) )
+    scores_soft_partitions = dict(normalized_partition_coefficient=(np.sum(membership_matrix ** 2) / membership_matrix.shape[1] - 1 / membership_matrix.shape[0]) / (1 - 1 / membership_matrix.shape[0]),
+               partition_entropy=-np.sum(membership_matrix * np.log(membership_matrix) / membership_matrix.shape[1]),
+               xie_beni=np.sum((membership_matrix**2).T*(scipy.spatial.distance.cdist(X, centroids)**2))/(X.shape[0]*np.min(centroids_dist)) )
     return scores_soft_partitions
