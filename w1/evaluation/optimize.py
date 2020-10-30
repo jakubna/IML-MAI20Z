@@ -1,9 +1,10 @@
 from typing import Type, List
 from w1.evaluation.evaluate import *
 from w1.algorithms.KMeans import KMeans
-
-
-def optimize(x: np.ndarray, y: np.ndarray, algorithm: Type[KMeans], algorithm_params: dict, metric: str,
+from w1.algorithms.KMedians import KMedians
+from w1.algorithms.bisecting_kmeans import BisectingKMeans
+from w1.algorithms.FuzzyCMeans import FuzzyCMeans
+def optimize(x: np.ndarray, y: np.ndarray, algorithm, metric: str,
              k_values: List[int], goal: str):
     """
     Optimize K value for the same data, algorithm and metric.
