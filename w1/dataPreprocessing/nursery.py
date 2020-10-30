@@ -6,6 +6,10 @@ import os
 
 
 def preprocess():
+    """
+    Apply the personalized operations to preprocess the database.
+    :return: 2D data array of size (rows, features).
+    """
     # load dataset
     f = os.path.join(os.path.dirname(os.path.abspath(__file__)), "datasets", "datasets", "nursery.arff")
     data, meta = arff.loadarff(f)
@@ -37,6 +41,7 @@ def preprocess():
             """
         return classes.index(value)
 
+    # get the true labels values of the dataset
     label_true = list(y.iloc[:].apply(label_encoding, classes=[b'not_recom', b'recommend', b'very_recom',
                                                                b'priority', b'spec_prior']))
 
@@ -57,4 +62,5 @@ def preprocess():
     # transform data
     x = norm.transform(x)
 
-    return x, label_true, df
+    return dict(db=x, label_true=label_true, data_frame=df)
+
