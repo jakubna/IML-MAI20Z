@@ -23,6 +23,12 @@ def apply_algorithms(x: np.ndarray, label_true, df, params):
     names = ['KMeans', 'Bisecting KMeans', 'KMedians', 'FuzzyCMeans']
     labels = []
 
+    # if optimal_k is true change the k value
+    if params['optimal_k']:
+        print("true")
+        algorithm = KMeans(k=params['k'])
+        params['k'] = algorithm.optimal_k4db(x, plot=True)
+
     # KMeans
     algorithm = KMeans(k=params['k'], seed=params['seed'], max_it=params['max_it'], tol=params['tol'])
     labels_kmeans = algorithm.fit_predict(x)
@@ -48,7 +54,7 @@ def apply_algorithms(x: np.ndarray, label_true, df, params):
 
     # DBscan
     find_eps(x)
-    dbscan_results, df = dbscan_(x, df=df, eps=params['eps'], min_s=params['min_s'])
+    dbscan_results, df = dbscan_(x, df=df, eps=params['eps'])
 
     # apply the evaluations of the obtained results
     df_home = apply_evaluation(x, label_true, labels, names, fuzzy_values)
@@ -76,6 +82,34 @@ def apply_evaluation(x: np.ndarray, label_true, labels, names, fuzzy_scores):
         if act_name == "FuzzyCMeans":
             fuzzy_results = evaluate_soft_partitions_internal(x, fuzzy_scores[0], fuzzy_scores[1])
         unsupervised = evaluate_unsupervised_internal(x, labels[i])
+        supervised = evaluate_supervised_external(label_true, labels[i])
+
+        row = {**dict(Names=act_name), **supervised, **unsupervised, **fuzzy_results}
+        rows.append(row)
+
+    df_results = pd.DataFrame(rows)
+
+    return df_results
+
+
+def preprocess_database(database: str):
+    """
+    With the input string choose the dataset that we want to execute and call preprocess function.
+    :param database: string with the name of the dataset that we want to execute.
+    :return: features of the preprocessed database(processed database, true classification results, complete dataframe).
+    """
+    # processed -> db, label_true, data_frame
+    if database == "breast":
+        processed = preprocess_breast()
+    elif database == "cmc":
+        processed = preprocess_cmc()
+    elif database == "nursery":
+        processed = preprocess_nursery()
+    else:
+        raise ValueError('database not found')
+
+    return processed
+
         supervised = evaluate_supervised_external(label_true, labels[i])
 
         row = {**dict(Names=act_name), **supervised, **unsupervised, **fuzzy_results}
