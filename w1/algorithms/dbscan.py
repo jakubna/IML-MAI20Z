@@ -19,7 +19,7 @@ def find_eps(x):
     plt.show()
 
 
-def dbscan_(x, df, eps=0.02, min_s=4):
+def dbscan_(x, df, eps=0.5):
     """ this functions aims to clusterize the dataset using sklearn DBSCAN using different metrics and algorithms
         and returns the original dataframe with labels of each metric-algorithm 
                      and a dataframe with results (columns = metric, algorithm, number of clusters, number of estimated
@@ -39,7 +39,7 @@ def dbscan_(x, df, eps=0.02, min_s=4):
         for method in algo:
             ma = metric+method
             if ma != 'cosineball_tree' and ma != 'cosinekd_tree':  # cosine can't deal wth ball_tree and kd_tree algrtms
-                db = DBSCAN(eps=eps, min_samples=min_s, metric=metric, algorithm=method).fit(x)
+                db = DBSCAN(eps=eps, min_samples=int(ln⁡(len(x))), metric=metric, algorithm=method).fit(x)
                 core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
                 core_samples_mask[db.core_sample_indices_] = True
                 labels = db.labels_
