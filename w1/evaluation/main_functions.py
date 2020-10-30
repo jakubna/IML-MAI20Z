@@ -24,22 +24,22 @@ def apply_algorithms(x: np.ndarray, label_true, df, params):
     labels = []
 
     # KMeans
-    algorithm = KMeans(k=params['k'], seed=params['k'], max_it=params['max_it'], tol=params['tol'])
+    algorithm = KMeans(k=params['k'], seed=params['seed'], max_it=params['max_it'], tol=params['tol'])
     labels_kmeans = algorithm.fit_predict(x)
     labels.append(labels_kmeans)
 
     # Bisecting
-    algorithm = BisectingKMeans(k=params['k'], seed=params['k'], max_it=params['max_it'], tol=params['tol'])
+    algorithm = BisectingKMeans(k=params['k'], seed=params['seed'], max_it=params['max_it'], tol=params['tol'])
     labels_bisecting = algorithm.fit_predict(x)
     labels.append(labels_bisecting)
 
     # KMeadians
-    algorithm = KMedians(k=params['k'], seed=params['k'], max_it=params['max_it'], tol=params['tol'])
+    algorithm = KMedians(k=params['k'], seed=params['seed'], max_it=params['max_it'], tol=params['tol'])
     labels_kmedians = algorithm.fit_predict(x)
     labels.append(labels_kmedians)
 
     # FuzzyCMeans
-    algorithm = FuzzyCMeans(k=params['k'], seed=params['k'], max_it=params['max_it'], tol=params['tol'],
+    algorithm = FuzzyCMeans(k=params['k'], seed=params['seed'], max_it=params['max_it'], tol=params['tol'],
                             epsilon=params['epsilon'], m=params['m'])
     fuzzy_values = algorithm.fit_predict(x)
     labels.append(fuzzy_values[2])
