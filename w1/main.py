@@ -7,7 +7,7 @@ def main():
     res = preprocess_database(database_name)
 
     # define the parameters
-    parameters = dict(k=4, max_it=100, seed=-1, tol=1e-5, eps=0.02, min_s=3, epsilon=0.01, m=2)
+    parameters = dict(k=2, max_it=100, seed=-1, tol=1e-5, eps=0.5, epsilon=0.01, m=2, optimal_k=False)
 
     # apply all the algorithms
     result = apply_algorithms(res['db'], res['label_true'], res['data_frame'], parameters)
@@ -26,3 +26,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
