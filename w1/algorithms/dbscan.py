@@ -39,7 +39,7 @@ def dbscan_(x, df, eps=0.5):
         for method in algo:
             ma = metric+method
             if ma != 'cosineball_tree' and ma != 'cosinekd_tree':  # cosine can't deal wth ball_tree and kd_tree algrtms
-                db = DBSCAN(eps=eps, min_samples=int(ln⁡(len(x))), metric=metric, algorithm=method).fit(x)
+                db = DBSCAN(eps=eps, min_samples=int(np.log⁡(len(x))), metric=metric, algorithm=method).fit(x)
                 core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
                 core_samples_mask[db.core_sample_indices_] = True
                 labels = db.labels_
