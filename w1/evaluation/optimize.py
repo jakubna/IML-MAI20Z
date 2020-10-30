@@ -27,7 +27,10 @@ def optimize(x: np.ndarray, y: np.ndarray, algorithm, metric: str,
     for k in k_values:  # iterate for every k in list
         model = algorithm(k=k)  # algorithm params
         model.fit(x)
-        y_pred = model.predict(x)
+        if algorithm == FuzzyCMeans:
+            y_pred= model.predict(x)[2]
+        else:
+            y_pred = model.predict(x)
         if metric in ['adjusted_mutual_info_score', 'adjusted_rand_score', 'completeness_score',
                       'fowlkes_mallows_score', 'homogeneity_score', 'v_measure_score']:
             scores = evaluate_supervised_external(y, y_pred)
