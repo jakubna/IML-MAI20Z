@@ -1,9 +1,10 @@
-from w1.lib.main_functions import *
+from w1.evaluation.main_functions import *
 
 
 def main():
     # choose the dataset to analyze
-    res = preprocess_database("breast")
+    database_name = "cmc"
+    res = preprocess_database(database_name)
 
     # define the parameters
     parameters = dict(k=4, max_it=100, seed=-1, tol=1e-5, eps=0.02, min_s=3, epsilon=0.01, m=2)
@@ -16,8 +17,8 @@ def main():
     print(result['dbscan_df'])
 
     # load results to a csv file
-    result['our_df'].to_csv("results/algorithms_results", sep='\t', encoding='utf-8', index=False)
-    result['dbscan_df'].to_csv("results/dbscan_results", sep='\t', encoding='utf-8', index=False)
+    result['our_df'].to_csv("results/"+database_name+"_algorithms_results", sep='\t', encoding='utf-8', index=False)
+    result['dbscan_df'].to_csv("results/"+database_name+"_dbscan_results", sep='\t', encoding='utf-8', index=False)
     print("The output files are created in results folder of this project")
 
     # metodes auxiliars, find eps, optimal K, fitxer de optimize
