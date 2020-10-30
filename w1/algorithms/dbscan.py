@@ -16,7 +16,7 @@ def find_eps(x):
     distances = np.sort(distances, axis=0)
     distances = distances[:, 1]
     plt.plot(distances)
-
+    plt.show()
 
 def dbscan_(x, df, eps):
     """ this functions aims to clusterize the dataset using sklearn DBSCAN using different metrics and algorithms
