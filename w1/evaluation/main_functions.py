@@ -1,6 +1,6 @@
 from w1.dataPreprocessing.breast import preprocess as preprocess_breast
 from w1.dataPreprocessing.cmc import preprocess as preprocess_cmc
-from w1.dataPreprocessing.adult import preprocess as preprocess_nursery
+from w1.dataPreprocessing.adult import preprocess as preprocess_adult
 from w1.algorithms.KMeans import KMeans
 from w1.algorithms.bisecting_kmeans import BisectingKMeans
 from w1.algorithms.KMedians import KMedians
@@ -103,8 +103,8 @@ def preprocess_database(database: str):
         processed = preprocess_breast()
     elif database == "cmc":
         processed = preprocess_cmc()
-    elif database == "nursery":
-        processed = preprocess_nursery()
+    elif database == "adult":
+        processed = preprocess_adult()
     else:
         raise ValueError('database not found')
 
