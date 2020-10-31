@@ -74,9 +74,8 @@ class KMeans:
         """
         self.fit(x)
         return self.predict(x)
-
-    @staticmethod
-    def optimal_k4db(x: np.ndarray, k_range=range(2, 15), plot=False):
+    
+    def optimal_k4db(self, x: np.ndarray, k_range=range(2, 10), plot=False):
         """
         Search the optimal number of clusters for the X dataset.
         :param x: 2D data array of size (rows, features).
@@ -88,7 +87,7 @@ class KMeans:
             raise Exception('The minimum range starting number must be 2')
         ss_distances = []
         for k in k_range:
-            km = KMeans(k)
+            km = KMeans(k, seed=self.seed)
             labels = km.fit_predict(x)
             ss_distances.append(silhouette_score(x, labels, metric='euclidean'))
 
