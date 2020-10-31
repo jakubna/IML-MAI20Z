@@ -60,6 +60,8 @@ def preprocess():
     X_categorical = onehotencoder.fit_transform(X[categorical_features])
     columns = onehotencoder.get_feature_names(input_features=categorical_features)
     X_categorical = pd.DataFrame(data=X_categorical, columns=columns)
+    # drop redundant column
+    X_categorical = X_categorical.drop(columns=["sex_b'Male'"])
 
     # fit MinMax scaler on data
     norm = MinMaxScaler()
@@ -68,8 +70,6 @@ def preprocess():
     X_numerical = pd.DataFrame(data=X_numerical, columns=numerical_features)
     # concatenate final preprocessed data set
     X_preprocessed = pd.concat((X_categorical, X_numerical), axis=1)
-
-
 
     # get the true labels values of the dataset
     label_true = list(Y.iloc[:].apply(label_encoding, classes=[b'>50K', b'<=50K']))
