@@ -8,6 +8,7 @@ from w1.algorithms.FuzzyCMeans import FuzzyCMeans
 from w1.algorithms.dbscan import *
 from w1.evaluation.evaluate import *
 from w1.evaluation.plot2D import *
+from w1.evaluation.optimize import *
 
 
 def apply_algorithms(x: np.ndarray, label_true, df, params):
@@ -25,7 +26,6 @@ def apply_algorithms(x: np.ndarray, label_true, df, params):
 
     # if optimal_k is true change the k value
     if params['optimal_k']:
-        print("true")
         algorithm = KMeans(k=params['k'])
         params['k'] = algorithm.optimal_k4db(x, plot=True)
 
@@ -110,30 +110,19 @@ def preprocess_database(database: str):
 
     return processed
 
-        supervised = evaluate_supervised_external(label_true, labels[i])
 
-        row = {**dict(Names=act_name), **supervised, **unsupervised, **fuzzy_results}
-        rows.append(row)
+def optim_k_value(processed, name: str, seed):
+    print("Get all the optimal K score for each algorithm for the dataset: "+name)
+    test = optimize(x=processed['db'], y=processed['label_true'], algorithm=KMeans, metric='silhouette_score',
+                    k_values=[2, 3, 4, 5, 6, 7, 8, 9, 10], goal='max', seed=seed)
+    print('KMeans', test[0])
+    test = optimize(x=processed['db'], y=processed['label_true'], algorithm=KMedians, metric='silhouette_score',
+                    k_values=[2, 3, 4, 5, 6, 7, 8, 9, 10], goal='max', seed=seed)
+    print('KMedians', test[0])
+    test = optimize(x=processed['db'], y=processed['label_true'], algorithm=BisectingKMeans, metric='silhouette_score',
+                    k_values=[2, 3, 4, 5, 6, 7, 8, 9, 10], goal='max', seed=seed)
+    print('BisectingKMeans', test[0])
+    test = optimize(x=processed['db'], y=processed['label_true'], algorithm=FuzzyCMeans, metric='silhouette_score',
+                    k_values=[2, 3, 4, 5, 6, 7, 8, 9, 10], goal='max', seed=seed)
+    print('FuzzyCMeans', test[0])
 
-    df_results = pd.DataFrame(rows)
-
-    return df_results
-
-
-def preprocess_database(database: str):
-    """
-    With the input string choose the dataset that we want to execute and call preprocess function.
-    :param database: string with the name of the dataset that we want to execute.
-    :return: features of the preprocessed database(processed database, true classification results, complete dataframe).
-    """
-    # processed -> db, label_true, data_frame
-    if database == "breast":
-        processed = preprocess_breast()
-    elif database == "cmc":
-        processed = preprocess_cmc()
-    elif database == "nursery":
-        processed = preprocess_nursery()
-    else:
-        raise ValueError('database not found')
-
-    return processed
