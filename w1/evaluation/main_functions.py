@@ -1,6 +1,6 @@
 from w1.dataPreprocessing.breast import preprocess as preprocess_breast
 from w1.dataPreprocessing.cmc import preprocess as preprocess_cmc
-from w1.dataPreprocessing.nursery import preprocess as preprocess_nursery
+from w1.dataPreprocessing.adult import preprocess as preprocess_nursery
 from w1.algorithms.KMeans import KMeans
 from w1.algorithms.bisecting_kmeans import BisectingKMeans
 from w1.algorithms.KMedians import KMedians
