@@ -2,14 +2,16 @@ from scipy.io import arff
 import numpy as np
 import pandas as pd
 import os
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.preprocessing import LabelEncoder
-
+from sklearn.preprocessing import MinMaxScaler, LabelEncoder
+from dataPreprocessing.utils import label_encoding
 
 def preprocess():
     """
     Apply the personalized operations to preprocess the database.
-    :return: 2D data array of size (rows, features).
+    :return: dict:
+            db: 2D data array of size (rows, features),
+            label_true: array of true label values,
+            data_frame: raw data set with filled missing values in.
     """
     # load dataset
     f = os.path.join(os.path.dirname(os.path.abspath(__file__)), "datasets", "datasets", "cmc.arff")
@@ -44,18 +46,6 @@ def preprocess():
     # split-out dataset
     x = df.iloc[:, :-1].copy()
     y = df.iloc[:, -1].copy()
-
-    def label_encoding(value, classes: bytearray):
-        """Function written based on label encoding rule
-            Parameters
-            ----------
-            value : value to interpret
-            classes: array of classes
-            Returns
-            -------
-            self : returns index of x value in classes array.
-            """
-        return classes.index(value)
 
     # get the true labels values of the dataset
     label_true = list(y.iloc[:].apply(label_encoding, classes=[b'1', b'2', b'3']))
