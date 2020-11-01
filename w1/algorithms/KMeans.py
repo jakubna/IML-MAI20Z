@@ -1,8 +1,5 @@
 import numpy as np
 from scipy.spatial import distance
-import matplotlib.pyplot as plt
-from sklearn.metrics import silhouette_score
-# only import sklearn for the metric of silhouette_score for reach the k optimal value.
 
 
 class KMeans:
@@ -74,31 +71,6 @@ class KMeans:
         """
         self.fit(x)
         return self.predict(x)
-    
-    def optimal_k4db(self, x: np.ndarray, k_range=range(2, 10), plot=False):
-        """
-        Search the optimal number of clusters for the X dataset.
-        :param x: 2D data array of size (rows, features).
-        :param k_range: the range of different k that the function will evaluate.
-        :param plot: this option pop up the Silhouette method plot.
-        :return: the optimal value of cluster for X data base.
-        """
-        if k_range.start < 2:
-            raise Exception('The minimum range starting number must be 2')
-        ss_distances = []
-        for k in k_range:
-            km = KMeans(k, seed=self.seed)
-            labels = km.fit_predict(x)
-            ss_distances.append(silhouette_score(x, labels, metric='euclidean'))
-
-        if plot:
-            plt.plot(k_range, ss_distances, 'bx-')
-            plt.xlabel('k')
-            plt.ylabel('Silhouette score')
-            plt.title('The Silhouette Method For Optimal k')
-            plt.show()
-
-        return ss_distances.index(max(ss_distances)) + k_range.start
 
     def _init_centroids(self):
         """Initialize centroids"""
