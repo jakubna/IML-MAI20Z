@@ -9,6 +9,7 @@ from w1.algorithms.dbscan import *
 from w1.evaluation.evaluate import *
 from w1.evaluation.plot2D import *
 from w1.evaluation.optimize import *
+import matplotlib.pyplot as plt
 
 
 def apply_algorithms(x: np.ndarray, label_true, df, params):
@@ -23,11 +24,6 @@ def apply_algorithms(x: np.ndarray, label_true, df, params):
     """
     names = ['KMeans', 'Bisecting KMeans', 'KMedians', 'FuzzyCMeans']
     labels = []
-
-    # if optimal_k is true change the k value
-    if params['optimal_k']:
-        algorithm = KMeans(k=params['k'])
-        params['k'] = algorithm.optimal_k4db(x, plot=True)
 
     # KMeans
     algorithm = KMeans(k=params['k'], seed=params['seed'], max_it=params['max_it'], tol=params['tol'])
@@ -53,8 +49,9 @@ def apply_algorithms(x: np.ndarray, label_true, df, params):
     # fuzzy_values -> [memb_matrix, centroids, crisp_labels]
 
     # DBscan
-    find_eps(x)
+    # find_eps(x)
     dbscan_results, df = dbscan_(x, df=df, eps=params['eps'])
+    # dbscan_results = pd.DataFrame()
 
     # apply the evaluations of the obtained results
     df_home = apply_evaluation(x, label_true, labels, names, fuzzy_values)
@@ -86,7 +83,6 @@ def apply_evaluation(x: np.ndarray, label_true, labels, names, fuzzy_scores):
 
         row = {**dict(Names=act_name), **supervised, **unsupervised, **fuzzy_results}
         rows.append(row)
-
     df_results = pd.DataFrame(rows)
 
     return df_results
@@ -111,18 +107,32 @@ def preprocess_database(database: str):
     return processed
 
 
-def optim_k_value(processed, name: str, seed):
-    print("Get all the optimal K score for each algorithm for the dataset: "+name)
-    test = optimize(x=processed['db'], y=processed['label_true'], algorithm=KMeans, metric='silhouette_score',
-                    k_values=[2, 3, 4, 5, 6, 7, 8, 9, 10], goal='max', seed=seed)
-    print('KMeans', test[0])
-    test = optimize(x=processed['db'], y=processed['label_true'], algorithm=KMedians, metric='silhouette_score',
-                    k_values=[2, 3, 4, 5, 6, 7, 8, 9, 10], goal='max', seed=seed)
-    print('KMedians', test[0])
-    test = optimize(x=processed['db'], y=processed['label_true'], algorithm=BisectingKMeans, metric='silhouette_score',
-                    k_values=[2, 3, 4, 5, 6, 7, 8, 9, 10], goal='max', seed=seed)
-    print('BisectingKMeans', test[0])
-    test = optimize(x=processed['db'], y=processed['label_true'], algorithm=FuzzyCMeans, metric='silhouette_score',
-                    k_values=[2, 3, 4, 5, 6, 7, 8, 9, 10], goal='max', seed=seed)
-    print('FuzzyCMeans', test[0])
+def optim_k_value(processed, name: str, params):
+    fig = plt.figure(figsize=(20, 20))
+    algorithms = [KMeans, KMedians, BisectingKMeans, FuzzyCMeans]
+    names = ["KMeans", "KMedians", "BisectingKMeans", "FuzzyCMeans"]
 
+    print("Get all the optimal K score for each algorithm for the dataset: " + name)
+    for i in range(0, len(algorithms)):
+        test = optimize(x=processed['db'], y=processed['label_true'], algorithm=algorithms[i], metric=params['metric'],
+                        k_values=params['rang'], goal=params['goal'], seed=params['seed'])
+        print(names[i], test['optimal'][0])
+        ax = fig.add_subplot(2, 2, i+1)
+        ax.plot(params['rang'], test['plot'], '-ob')
+        ax.scatter(test['optimal'][0]['k'], test['optimal'][0]['score'], c='red', alpha=0.5, s=150)
+        ax.set_xlabel('k')
+        ax.set_ylabel('Method score')
+        ax.set_title('The ' + params['metric'] + ' result for '+names[i])
+
+    plt.show()
+
+
+def set_output(result, database_name):
+    # print result at the terminal
+    print(result['our_df'])
+    print(result['dbscan_df'])
+
+    # load results to a csv file
+    result['our_df'].to_csv("./results/"+database_name+"_algorithms_results", sep='\t', encoding='utf-8', index=False)
+    result['dbscan_df'].to_csv("./results/"+database_name+"_dbscan_results", sep='\t', encoding='utf-8', index=False)
+    print("\nThe CSV output files are created in results folder of this project\n")
