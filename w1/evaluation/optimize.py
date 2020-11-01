@@ -18,9 +18,10 @@ def optimize(x: np.ndarray, y: np.ndarray, algorithm, metric: str, k_values: Lis
                                                                     partition_entropy, xie_beni
     :param k_values: List of `K` values to test.
     :param goal: `max` or `min` the metric (maximaze or minimize the metric)
-    :return: list containg k values and scores
+    :return: list containing k values and scores
     """
     results = []
+    plot_res = []
     score = 0
     assert goal in ['max', 'min']
     for k in k_values:  # iterate for every k in list
@@ -41,5 +42,6 @@ def optimize(x: np.ndarray, y: np.ndarray, algorithm, metric: str, k_values: Lis
             scores = evaluate_soft_partitions_internal(x, y_pred[0], y_pred[1])
             score = scores[metric]
         results.append({'k': k, 'score': score})
-    return sorted(results, key=lambda z: z['score'], reverse=goal == 'max')
+        plot_res.append(score)
 
+    return dict(optimal=(sorted(results, key=lambda z: z['score'], reverse=goal == 'max')), plot=plot_res)
