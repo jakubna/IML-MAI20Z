@@ -22,7 +22,7 @@ def pca_sklearn(X, datasetname):
   x = np.arange(len(pca.singular_values_))
   labels = [ str(i+1)+ 'º Component' for i in list(x)]
   plt.bar(x,pca.singular_values_)
-  plt.title('PCA - ' + dataset + ' data set')
+  plt.title('PCA - ' + datasetname + ' data set')
   plt.ylabel('Eingevalue')
   plt.xticks(x, labels)
   plt.show()
