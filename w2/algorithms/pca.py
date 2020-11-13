@@ -1,8 +1,9 @@
 from numpy import linalg as LA
 import numpy as np
 
+
 class PCA:
-    
+
     def __init__(self, n_components: int = None):
         """
         :param n_components: Number of components to keep. if n_components is not set all components are kept
@@ -14,16 +15,15 @@ class PCA:
         self.components = None
         self.all_eig_val = None
         self.all_eig_vect = None
+        self.explained_variance = None
+        self.explained_variance_ratio = None
+        self.k = None
 
     def fit(self, X: np.ndarray):
         """
         Fit the model with X.
         :param X: 2D data array of size (rows, features).
         """
-        if type(self.n_components) == int:
-            k = self.n_components
-        else:
-            k = X.shape[1]
         # Compute the d-dimensional mean vector
         self.mean = np.mean(X, axis=0)
         # Center columns by subtracting column means
@@ -43,8 +43,24 @@ class PCA:
         eig_val, eig_vect = np.array(eig_val), np.array(eig_vect)
         self.all_eig_val = eig_val
         self.all_eig_vect = eig_vect
+        # set explained variance and explained variance ratio
+        self.explained_variance = eig_val
+        self.explained_variance_ratio = self.explained_variance / self.explained_variance.sum()
+
+        # setting number of components
+        if type(self.n_components) == int:
+            k = self.n_components
+        elif type(self.n_components) == float:
+            k = np.searchsorted(self.explained_variance_ratio.cumsum(), self.n_components) + 1
+        else:
+            k = X.shape[1]
+
+        self.explained_variance = self.explained_variance[:k]
+        self.explained_variance_ratio = self.explained_variance_ratio[:k]
+
         self.eig_val = eig_val[:k]
         self.components = eig_vect[:k, :]
+        self.k = k
         print('K first eigenvalues:\n', self.eig_val)
         print('K eigenvectors:\n', self.components)
 
