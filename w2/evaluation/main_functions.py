@@ -9,13 +9,14 @@ import pandas as pd
 from w2.algorithms.pca_sklearn import *
 
 
-def apply_algorithms(x: np.ndarray, label_true, params, components):
+def apply_algorithms(x: np.ndarray, label_true, params, components, database_name):
     """
     Apply the implemented algorithms, dbscan and evaluate the obtained results.
     :param x: 2D data array of size (rows, features).
     :param label_true: labels of the real classification extracted from the database.
     :param params: dictionary with all the parameters required to execute the algorithms.
     :param components: name and index of the features chosen by user to plot for the original data set plot.
+    :param database_name: name of the database that is being tested
     """
     names = ['Original dataset', 'Our PCA results', 'KMeans with previous our PCA reduction',
              'KMeans without previous reduction (PCA)', 'KMeans without previous reduction (T-SNE)']
@@ -42,9 +43,9 @@ def apply_algorithms(x: np.ndarray, label_true, params, components):
     sk_ipca = ipca_sklearn(x, params['db_name'], params['n_components'])
 
     # compare the three PCA algorithms
-    name = ['Our PCA', 'SK_PCA', 'SK_IPCA']
-    pca_data = [our_pca, sk_pca['db'], sk_ipca['db']]
-    apply_evaluation(pca_data, label_true, params, name)
+    name = ['Our PCA', 'SK_PCA', 'SK_IPCA','original_data]
+    pca_data = [our_pca, sk_pca['db'], sk_ipca['db'],x]
+    apply_evaluation(pca_data, label_true, params, name, database_name)
 
     # KMeans with PCA reduction
     algorithm = KMeans(k=params['k'], seed=params['seed'], max_it=params['max_it'], tol=params['tol'])
@@ -73,13 +74,14 @@ def apply_algorithms(x: np.ndarray, label_true, params, components):
         plot3d(datasets, labels, names, plot_names, reduct)
 
 
-def apply_evaluation(x, label_true, params, names):
+def apply_evaluation(x, label_true, params, names,database_name):
     """
     Apply all the evaluations to the implemented algorithms and classify in a dataframe.
     :param x: 2D data array of size (rows, features).
     :param label_true: labels of the real classification extracted from the database.
     :param params: parameters for the k-means algorithm.
     :param names: list of all the evaluated algorithms.
+    :param database_name: name of the database that is being tested
     :return: a dataframe with the evaluation results for algorithms implemented in this practise.
     """
     rows = []
@@ -97,7 +99,7 @@ def apply_evaluation(x, label_true, params, names):
         row = {**dict(Names=act_name), **supervised, **unsupervised}
         rows.append(row)
     df_results = pd.DataFrame(rows)
-    set_output(df_results, 'pca_analysis')
+    set_output(df_results, 'pca_analysis_'+database_name)
 
 
 def preprocess_database(database: str):
