@@ -59,9 +59,3 @@ def ipca_sklearn(X, dataset_name, n_compo):
     plt.show()
 
     return dict(eigenvalues=biggest_eigenvalues_ipca, eigenvectors=eigenvectors_ipca, db=x_ipca)
-
-
-def compare_sklearn_results(our_pca_data, pca_data, ipca_data):
-    print("Our PCA:\n", our_pca_data)
-    print("PCA: \n", pca_data['db'])
-    print("PCA incremental\n", ipca_data['db'])
