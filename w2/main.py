@@ -18,14 +18,16 @@ def main():
         max_it: maximum number of iterations.
         seed: seed for the random search of first centroids.
         tol: algorithms tolerance to movement of centroids between loops.
-        eps: epsilon for the DBScan algorithm.
-        epsilon: epsilon for FuzzyCMeans algorithm.
-        m: the fuzziness index for FuzzyCMeans.
+        n_components: number of components that finally you want to obtain after the pca reduction
+        db_name: NON changeable item, is the used data set name
     """
     parameters = dict(k=3, max_it=100, seed=1, tol=1e-5, n_components=3, db_name=database_name)
 
+    # make sure that the names of the rows are column names of the database and n_components=length of names_row
+    components = get_features(res['data_frame'], parameters['n_components'])
+
     # apply all the algorithms
-    apply_algorithms(res['db'], res['label_true'], parameters)
+    apply_algorithms(res['db'], res['label_true'], parameters, components)
 
     # load results to a csv file
     # set_output(result, database_name)
@@ -33,3 +35,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
