@@ -27,7 +27,7 @@ def main():
     components = get_features(res['data_frame'], parameters['n_components'])
 
     # apply all the algorithms
-    apply_algorithms(res['db'], res['label_true'], parameters, components)
+    apply_algorithms(res['db'], res['label_true'], parameters, components, database_name)
 
 
 if __name__ == "__main__":
