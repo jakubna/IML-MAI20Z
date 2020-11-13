@@ -15,62 +15,89 @@ def apply_algorithms(x: np.ndarray, label_true, params, components):
     :param x: 2D data array of size (rows, features).
     :param label_true: labels of the real classification extracted from the database.
     :param params: dictionary with all the parameters required to execute the algorithms.
-    :param components: name and index of the features choosed by user to plot for the original data set plot.
+    :param components: name and index of the features chosen by user to plot for the original data set plot.
     """
-    names = ['KMeans without previous PCA reduct', 'KMeans with previous PCA reduct']
+    names = ['Original dataset', 'Our PCA results', 'KMeans with previous our PCA reduction',
+             'KMeans without previous reduction (PCA)', 'KMeans without previous reduction (T-SNE)']
+
+    datasets = []
     labels = []
+    reduct = []
+
+    # get the representation of the original matrix splitted to be plotted
+    partial_x = split_db_original(x, components)
+    datasets.append(partial_x)
+    labels.append(label_true)
+    reduct.append(None)
 
     # get our PCA
     pca = PCA(n_components=params['n_components'])
     our_pca = pca.fit_transform(x)
+    datasets.append(our_pca)
+    labels.append(label_true)
+    reduct.append(None)
 
     # get PCA and IPCA from sklearn
     sk_pca = pca_sklearn(x, params['db_name'], params['n_components'])
     sk_ipca = ipca_sklearn(x, params['db_name'], params['n_components'])
 
     # compare the three PCA algorithms
-    compare_sklearn_results(our_pca, sk_pca, sk_ipca)
-
-    # KMeans without PCA reduction
-    algorithm = KMeans(k=params['k'], seed=params['seed'], max_it=params['max_it'], tol=params['tol'])
-    labels_kmeans = algorithm.fit_predict(x)
-    labels.append(labels_kmeans)
+    name = ['Our PCA', 'SK_PCA', 'SK_IPCA']
+    pca_data = [our_pca, sk_pca['db'], sk_ipca['db']]
+    apply_evaluation(pca_data, label_true, params, name)
 
     # KMeans with PCA reduction
     algorithm = KMeans(k=params['k'], seed=params['seed'], max_it=params['max_it'], tol=params['tol'])
     labels_kmeans = algorithm.fit_predict(our_pca)
+    datasets.append(our_pca)
     labels.append(labels_kmeans)
+    reduct.append(None)
 
-    plot_original(x, our_pca, label_true, components)
+    # KMeans without PCA reduction
+    algorithm = KMeans(k=params['k'], seed=params['seed'], max_it=params['max_it'], tol=params['tol'])
+    labels_kmeans = algorithm.fit_predict(x)
+    datasets.append(x)
+    labels.append(labels_kmeans)
+    reduct.append('pca')
+    datasets.append(x)
+    labels.append(labels_kmeans)
+    reduct.append('tsne')
 
     if params['n_components'] == 2:
-        plot2d(x, labels, names)
+        pca_names = ['PCA Component 1', 'PCA Component 2']
+        plot_names = [components[0], pca_names, pca_names, pca_names, ['TSNE 1', 'T-SNE 2']]
+        plot2d(datasets, labels, names, plot_names, reduct)
     elif params['n_components'] == 3:
-        plot3d(x, labels, names)
+        pca_names = ['PCA Component 1', 'PCA Component 2', 'PCA Component 3']
+        plot_names = [components[0], pca_names, pca_names, pca_names, ['TSNE 1', 'T-SNE 2', 'T-SNE 3']]
+        plot3d(datasets, labels, names, plot_names, reduct)
 
 
-def apply_evaluation(x: np.ndarray, label_true, labels, names):
+def apply_evaluation(x, label_true, params, names):
     """
     Apply all the evaluations to the implemented algorithms and classify in a dataframe.
     :param x: 2D data array of size (rows, features).
     :param label_true: labels of the real classification extracted from the database.
-    :param labels: list of the different classifications obtained for all the algorithms.
-    :param names: list of all the implemented algorithm names.
+    :param params: parameters for the k-means algorithm.
+    :param names: list of all the evaluated algorithms.
     :return: a dataframe with the evaluation results for algorithms implemented in this practise.
     """
-    nan = np.nan
     rows = []
 
     for i in range(0, len(names)):
         act_name = names[i]
+        act_data = x[i]
 
-        unsupervised = evaluate_unsupervised_internal(x, labels[i])
-        supervised = evaluate_supervised_external(label_true, labels[i])
+        algorithm = KMeans(k=params['k'], seed=params['seed'], max_it=params['max_it'], tol=params['tol'])
+        labels = algorithm.fit_predict(act_data)
+
+        unsupervised = evaluate_unsupervised_internal(act_data, labels)
+        supervised = evaluate_supervised_external(label_true, labels)
 
         row = {**dict(Names=act_name), **supervised, **unsupervised}
         rows.append(row)
     df_results = pd.DataFrame(rows)
-    return df_results
+    set_output(df_results, 'pca_analysis')
 
 
 def preprocess_database(database: str):
@@ -92,24 +119,19 @@ def preprocess_database(database: str):
     return processed
 
 
-def plot_original(x, x_pca, true_labels, components):
+def split_db_original(x,  components):
     """
-    Method that process input parameters and call the plot function without pca or t-nse reduction.
+    Method that process input database with the row chosen by user.
     :param x: processed dataset 2D numpy array.
-    :param x_pca: processed data set with a pca reduction, 2d numpy array.
-    :param true_labels: labels of the real classification extracted from the database.
     :param components: names and index of the features chosen by user to plot for the original data set plot.
     """
-    n_compo = len(components[1])
     cm = components[1]
     ap = []
     for itera in cm:
         ap.append(x[:, itera].tolist())
     ap_np = np.transpose(np.array(ap))
-    if n_compo == 2:
-        plot_ori_2d(ap_np, x_pca, true_labels, components[0])
-    elif n_compo == 3:
-        plot_ori_3d(ap_np, x_pca, true_labels, components[0])
+
+    return ap_np
 
 
 def get_features(data_frame, n_components):
@@ -142,11 +164,11 @@ def get_features(data_frame, n_components):
     return components, index
 
 
-def set_output(result, database_name):
+def set_output(results, database_name):
     # print result at the terminal
-    print(result['our_df'])
+    print(results)
 
     # load results to a csv file
-    result['our_df'].to_csv("./results/"+database_name+"_algorithms_results", sep='\t', encoding='utf-8', index=False)
-    print("\nThe CSV output files are created in results folder of this project\n")
+    results.to_csv("./results/" + database_name + ".csv", sep='\t', encoding='utf-8', index=False)
 
+    print("\nThe CSV output files are created in results folder of this project\n")
