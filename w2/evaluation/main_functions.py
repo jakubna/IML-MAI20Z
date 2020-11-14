@@ -43,7 +43,7 @@ def apply_algorithms(x: np.ndarray, label_true, params, components, database_nam
     sk_ipca = ipca_sklearn(x, params['db_name'], params['n_components'])
 
     # compare the three PCA algorithms
-    name = ['Our PCA', 'SK_PCA', 'SK_IPCA','original_data]
+    name = ['Our PCA', 'SK_PCA', 'SK_IPCA','original_data']
     pca_data = [our_pca, sk_pca['db'], sk_ipca['db'],x]
     apply_evaluation(pca_data, label_true, params, name, database_name)
 
@@ -64,11 +64,25 @@ def apply_algorithms(x: np.ndarray, label_true, params, components, database_nam
     labels.append(labels_kmeans)
     reduct.append('tsne')
 
-    if params['n_components'] == 2:
+    #selection number of dimensions of plot
+    if type(params['n_components'])==int:
+        if params['n_components'] == 2:
+            nd =2
+        if params['n_components']>2:
+            nd=3
+    elif type(params['n_components'])==float:
+        if our_pca.shape[1]==2:
+            nd=2
+        if our_pca.shape[1]>2:
+            nd=3
+    else:
+        nd=3
+
+    if nd == 2:
         pca_names = ['PCA Component 1', 'PCA Component 2']
         plot_names = [components[0], pca_names, pca_names, pca_names, ['TSNE 1', 'T-SNE 2']]
         plot2d(datasets, labels, names, plot_names, reduct)
-    elif params['n_components'] == 3:
+    elif nd == 3:
         pca_names = ['PCA Component 1', 'PCA Component 2', 'PCA Component 3']
         plot_names = [components[0], pca_names, pca_names, pca_names, ['TSNE 1', 'T-SNE 2', 'T-SNE 3']]
         plot3d(datasets, labels, names, plot_names, reduct)
@@ -136,7 +150,7 @@ def split_db_original(x,  components):
     return ap_np
 
 
-def get_features(data_frame, n_components):
+def get_features(data_frame):
     """
     Function that ask to the user which features want to see in the plot of the original data set.
     :param data_frame: original dataframe.
@@ -147,7 +161,7 @@ def get_features(data_frame, n_components):
     com = 1
     components = []
     index = []
-    for n_iter in range(n_components):
+    for n_iter in range(3):
         print("Choose the {}-feature that you want to plot: ".format(n_iter + 1))
         for i in range(len(col)):
             if col[i] == -1:
