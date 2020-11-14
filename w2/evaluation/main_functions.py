@@ -2,7 +2,7 @@ from w2.dataPreprocessing.breast import preprocess as preprocess_breast
 from w2.dataPreprocessing.cmc import preprocess as preprocess_cmc
 from w2.dataPreprocessing.adult import preprocess as preprocess_adult
 from w2.algorithms.KMeans import KMeans
-from w2.algorithms.pca import PCA
+from w2.algorithms.pca import PCA as OPCA
 from w2.evaluation.plot import *
 from w2.evaluation.evaluate import *
 import pandas as pd
@@ -32,7 +32,7 @@ def apply_algorithms(x: np.ndarray, label_true, params, components, database_nam
     reduct.append(None)
 
     # get our PCA
-    pca = PCA(n_components=params['n_components'])
+    pca = OPCA(n_components=params['n_components'])
     our_pca = pca.fit_transform(x)
     datasets.append(our_pca)
     labels.append(label_true)
