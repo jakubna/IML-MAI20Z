@@ -1,10 +1,10 @@
 from numpy import linalg as LA
 import numpy as np
-
+from typing import Union
 
 class PCA:
 
-    def __init__(self, n_components: int = None):
+    def __init__(self, n_components: Union[int, float, None] = None):
         """
         :param n_components: Number of components to keep. if n_components is not set all components are kept
         """
