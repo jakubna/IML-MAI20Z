@@ -6,11 +6,15 @@ from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 
 
-def plot3d(data_input, y, titles, components_names,reduct=None):
-    """ the function aims to reduce the features to two dimensions using PCA method and plot the clusters
-        data_input: 3D data array of size (rows, features).
-        y: results labels.
-        title: graphic title (example: adults dataset using KMeans).
+def plot3d(data_input, y, titles, components_names, reduct=None):
+    """
+    the function aims to reduce the features to two dimensions using PCA method and plot the clusters
+    :param data_input: 3D data array of size (rows, features).
+    :param y: results labels.
+    :param titles: graphic title (example: adults dataset using KMeans).
+    :param components_names: array with the component names for each plot.
+    :param reduct: array with the same dimension of data_input, it has if a reduction of data
+                    is needed and the reduction type.
     """
     fig = plt.figure(figsize=(10, 10))
     for i in range(0, len(titles)):
@@ -43,11 +47,15 @@ def plot3d(data_input, y, titles, components_names,reduct=None):
     plt.show()
 
 
-def plot2d(data_input, y, titles, components_names,reduct=None):
-    """ the function aims to reduce the features to two dimensions using PCA method and plot the clusters
-        data_input: 3D data array of size (rows, features).
-        y: results labels.
-        title: graphic title (example: adults dataset using KMeans).
+def plot2d(data_input, y, titles, components_names, reduct=None):
+    """
+    the function aims to reduce the features to two dimensions using PCA method and plot the clusters
+    :param data_input: 3D data array of size (rows, features).
+    :param y: results labels.
+    :param titles: graphic title (example: adults dataset using KMeans).
+    :param components_names: array with the component names for each plot.
+    :param reduct: array with the same dimension of data_input, it has if a reduction
+            of data is needed and the reduction type.
     """
     fig = plt.figure(figsize=(10, 10))
     for i in range(0, len(titles)):
@@ -78,6 +86,13 @@ def plot2d(data_input, y, titles, components_names,reduct=None):
 
 
 def pca_tnse_reduction(data, n_comp, reduct):
+    """
+    Apply the reduction needed and return the results obtained.
+    :param data: 2D data array of size (rows, features).
+    :param n_comp: the number ob components that database have to be reduced.
+    :param reduct: type of reduction needed.
+    :return principal components obtained.
+    """
     principal_components = None
     if reduct == 'pca':
         pca = PCA(n_components=n_comp)
