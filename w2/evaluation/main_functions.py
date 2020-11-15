@@ -43,8 +43,8 @@ def apply_algorithms(x: np.ndarray, label_true, params, components, database_nam
     sk_ipca = ipca_sklearn(x, params['db_name'], params['n_components'])
 
     # compare the three PCA algorithms
-    name = ['Our PCA', 'SK_PCA', 'SK_IPCA','original_data']
-    pca_data = [our_pca, sk_pca['db'], sk_ipca['db'],x]
+    name = ['Our PCA', 'SK_PCA', 'SK_IPCA', 'original_data']
+    pca_data = [our_pca, sk_pca['db'], sk_ipca['db'], x]
     apply_evaluation(pca_data, label_true, params, name, database_name)
 
     # KMeans with PCA reduction
@@ -64,19 +64,19 @@ def apply_algorithms(x: np.ndarray, label_true, params, components, database_nam
     labels.append(labels_kmeans)
     reduct.append('tsne')
 
-    #selection number of dimensions of plot
-    if type(params['n_components'])==int:
+    # selection number of dimensions of plot
+    if type(params['n_components']) == int:
         if params['n_components'] == 2:
-            nd =2
-        if params['n_components']>2:
-            nd=3
-    elif type(params['n_components'])==float:
-        if our_pca.shape[1]==2:
-            nd=2
-        if our_pca.shape[1]>2:
-            nd=3
+            nd = 2
+        if params['n_components'] > 2:
+            nd = 3
+    elif type(params['n_components']) == float:
+        if our_pca.shape[1] == 2:
+            nd = 2
+        if our_pca.shape[1] > 2:
+            nd = 3
     else:
-        nd=3
+        nd = 3
 
     if nd == 2:
         pca_names = ['PCA Component 1', 'PCA Component 2']
@@ -88,7 +88,7 @@ def apply_algorithms(x: np.ndarray, label_true, params, components, database_nam
         plot3d(datasets, labels, names, plot_names, reduct)
 
 
-def apply_evaluation(x, label_true, params, names,database_name):
+def apply_evaluation(x, label_true, params, names, database_name):
     """
     Apply all the evaluations to the implemented algorithms and classify in a dataframe.
     :param x: 2D data array of size (rows, features).
@@ -150,18 +150,21 @@ def split_db_original(x,  components):
     return ap_np
 
 
-def get_features(data_frame):
+def get_features(data_frame, n_components):
     """
     Function that ask to the user which features want to see in the plot of the original data set.
     :param data_frame: original dataframe.
-    :param n_components: number of component that user want to reduce the dataset.
+    :param n_components: number of components specified by user
     :return: the names of the features that user choose and its index in the matrix.
     """
+    n_features = 3
+    if n_components == 2:
+        n_features = 2
     col = data_frame.columns.tolist()[:-1]
     com = 1
     components = []
     index = []
-    for n_iter in range(3):
+    for n_iter in range(n_features):
         print("Choose the {}-feature that you want to plot: ".format(n_iter + 1))
         for i in range(len(col)):
             if col[i] == -1:
