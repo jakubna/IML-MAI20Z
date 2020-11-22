@@ -1,6 +1,7 @@
 from numpy import linalg as LA
 import numpy as np
 from scipy.spatial import distance
+from collections import Counter
 
 
 class kNNAlgorithm:
@@ -83,7 +84,27 @@ class kNNAlgorithm:
             return y_pred
 
         elif self.weights == "inverse_distance":
+            class_counter = Counter()
+            y_pred=[]
             neigh_dist, neigh_ind = self.kneighbors(self.X_test, return_distance=True)
+            for n in range(len(neigh_ind)):
+                for index in range(len(neigh)):
+                    dist=neigh_dist[n][index]
+                    label=neigh_ind[n][index]
+                    class_counter[label]=+ 1/dist
+                y_pred.append(class_counter.most_common(1)[0][0])
+             return y_pred
+         elif self.weights == "sheppard_work":
+            class_counter = Counter()
+            y_pred=[]
+            neigh_dist, neigh_ind = self.kneighbors(self.X_test, return_distance=True)
+            for n in range(len(neigh_ind)):
+                for index in range(len(neigh)):
+                    dist=neigh_dist[n][index]
+                    label=neigh_ind[n][index]
+                    class_counter[label]=+ exp(-dist)
+                y_pred.append(class_counter.most_common(1)[0][0])
+             return y_pred                   
 
     def _calculate_distance(self, x: np.ndarray, y: np.ndarray):
         """
