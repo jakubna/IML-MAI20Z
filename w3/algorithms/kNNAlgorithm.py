@@ -14,7 +14,7 @@ class kNNAlgorithm:
         """
         if n_neighbors < 1:
             raise ValueError('n_neighbors must be a positive number')
-        if weights not in ['majority_class', 'inverse_distance']:
+        if weights not in ['majority_class', 'inverse_distance,'sheppard_work']:
             raise ValueError('Param weights can be: uniform or distance')
         if metric not in ['minkowski', 'euclidean']:
             raise ValueError('Param metric can be: minkowski or euclidean')
