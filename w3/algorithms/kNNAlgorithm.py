@@ -9,7 +9,7 @@ class kNNAlgorithm:
     def __init__(self, n_neighbors: int = 5, weights='majority_class', metric='minkowski'):
         """
         :param n_neighbors: Number of neighbors to use by default for kneighbors queries.
-        :param weights: Weight function used in prediction. Possible values: 'majority_class', 'inverse_distance'.
+        :param weights: Weight function used in prediction. Possible values: 'majority_class', 'inverse_distance','sheppard_work'.
         :param metric: The distance metric to use for the tree
         """
         if n_neighbors < 1:
