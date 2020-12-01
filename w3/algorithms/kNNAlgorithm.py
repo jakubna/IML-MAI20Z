@@ -88,7 +88,7 @@ class kNNAlgorithm:
             y_pred=[]
             neigh_dist, neigh_ind = self.kneighbors(self.X_test, return_distance=True)
             for n in range(len(neigh_ind)):
-                for index in range(len(neigh)):
+                for index in range(len(n)):
                     dist=neigh_dist[n][index]
                     label=neigh_ind[n][index]
                     class_counter[label]=+ 1/dist
@@ -99,7 +99,7 @@ class kNNAlgorithm:
             y_pred=[]
             neigh_dist, neigh_ind = self.kneighbors(self.X_test, return_distance=True)
             for n in range(len(neigh_ind)):
-                for index in range(len(neigh)):
+                for index in range(len(n)):
                     dist=neigh_dist[n][index]
                     label=neigh_ind[n][index]
                     class_counter[label]=+ exp(-dist)
