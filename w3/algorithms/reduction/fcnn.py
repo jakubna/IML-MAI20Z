@@ -2,7 +2,7 @@ import numpy as np
 from algorithms.KNNAlgorithm import KNNAlgorithm
 
 
-def __cnn_reduction(knn: KNNAlgorithm, X: np.ndarray, y: np.ndarray):
+def fcnn_reduction(knn: KNNAlgorithm, X: np.ndarray, y: np.ndarray):
     knn.fit(X,y)
     S, V = [], []
     
