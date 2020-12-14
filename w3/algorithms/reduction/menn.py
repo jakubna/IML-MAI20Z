@@ -2,7 +2,7 @@ import numpy as np
 from algorithms.KNNAlgorithm import KNNLAlgorithm
 
 
-def enn_reduction(knn: KNNLAlgorithm, X: np.ndarray, y: np.ndarray):
+def menn_reduction(knn: KNNLAlgorithm, X: np.ndarray, y: np.ndarray):
     knn.fit(X, y)
     remove_intances = []
     for i in range(X.shape[0]):
