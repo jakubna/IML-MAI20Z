@@ -1,99 +1,48 @@
-from w2.dataPreprocessing.breast import preprocess as preprocess_breast
-from w2.dataPreprocessing.cmc import preprocess as preprocess_cmc
-from w2.dataPreprocessing.adult import preprocess as preprocess_adult
-from w2.algorithms.KMeans import KMeans
-from w2.algorithms.pca import PCA as OPCA
-from w2.evaluation.plot import *
-from w2.evaluation.evaluate import *
+from dataPreprocessing.breast import preprocess as preprocess_breast
+from dataPreprocessing.cmc import preprocess as preprocess_cmc
+from dataPreprocessing.adult import preprocess as preprocess_adult
+from evaluation.plot import *
+from evaluation.evaluate import *
 import pandas as pd
-from w2.algorithms.pca_sklearn import *
+from algorithms.kNNAlgorithm import kNNAlgorithm
 
 
-def apply_algorithms(x: np.ndarray, label_true, params, components, database_name):
+def apply_algorithms(x: np.ndarray, label_true, params):
     """
     Apply the implemented algorithms, dbscan and evaluate the obtained results.
     :param x: 2D data array of size (rows, features).
     :param label_true: labels of the real classification extracted from the database.
     :param params: dictionary with all the parameters required to execute the algorithms.
-    :param components: name and index of the features chosen by user to plot for the original data set plot.
-    :param database_name: name of the database that is being tested
     """
-    names = ['Original dataset', 'Our PCA results', 'KMeans with previous our PCA reduction',
-             'KMeans without previous reduction (PCA)', 'KMeans without previous reduction (T-SNE)']
-
-    datasets = []
-    labels = []
-    reduct = []
-
-    # get the representation of the original matrix splitted to be plotted
-    partial_x = split_db_original(x, components)
-    datasets.append(partial_x)
-    labels.append(label_true)
-    reduct.append(None)
 
     # get our PCA
-    pca = OPCA(n_components=params['n_components'])
-    our_pca = pca.fit_transform(x)
-    datasets.append(our_pca)
-    labels.append(label_true)
-    reduct.append(None)
+    knn = kNNAlgorithm(n_neighbors=params['n_neighbors'], weights=params['weights'], policy=params['policy'],
+                       metric=params['metric'])
+    #partitionate the database
+    siz = int(x.shape[0]/2)
+    sp_x1 = x[:siz]
+    sp_x2 = x[siz:]
+    lt1 = label_true[:siz]
+    lt2 = label_true[siz:]
 
-    # get PCA and IPCA from sklearn
-    sk_pca = pca_sklearn(x, params['db_name'], params['n_components'])
-    sk_ipca = ipca_sklearn(x, params['db_name'], params['n_components'])
+    sp_x1 = x
+    sp_x2 = x
+    lt1 = label_true
+    lt2 = label_true
 
-    # compare the three PCA algorithms
-    name = ['Our PCA', 'SK_PCA', 'SK_IPCA', 'original_data']
-    pca_data = [our_pca, sk_pca['db'], sk_ipca['db'], x]
-    apply_evaluation(pca_data, label_true, params, name, database_name)
+    knn.fit(sp_x1, lt1)
+    predict = knn.predict(sp_x2)
 
-    # KMeans with PCA reduction
-    algorithm = KMeans(k=params['k'], seed=params['seed'], max_it=params['max_it'], tol=params['tol'])
-    labels_kmeans = algorithm.fit_predict(our_pca)
-    datasets.append(our_pca)
-    labels.append(labels_kmeans)
-    reduct.append(None)
-
-    # KMeans without PCA reduction
-    algorithm = KMeans(k=params['k'], seed=params['seed'], max_it=params['max_it'], tol=params['tol'])
-    labels_kmeans = algorithm.fit_predict(x)
-    datasets.append(x)
-    labels.append(labels_kmeans)
-    reduct.append('pca')
-    datasets.append(x)
-    labels.append(labels_kmeans)
-    reduct.append('tsne')
-
-    # selection number of dimensions of plot
-    if type(params['n_components']) == int:
-        if params['n_components'] == 2:
-            nd = 2
-        if params['n_components'] > 2:
-            nd = 3
-    elif type(params['n_components']) == float:
-        if our_pca.shape[1] == 2:
-            nd = 2
-        if our_pca.shape[1] > 2:
-            nd = 3
-    else:
-        nd = 3
-
-    if nd == 2:
-        pca_names = ['PCA Component 1', 'PCA Component 2']
-        plot_names = [components[0], pca_names, pca_names, pca_names, ['TSNE 1', 'T-SNE 2']]
-        plot2d(datasets, labels, names, plot_names, reduct)
-    elif nd == 3:
-        pca_names = ['PCA Component 1', 'PCA Component 2', 'PCA Component 3']
-        plot_names = [components[0], pca_names, pca_names, pca_names, ['TSNE 1', 'T-SNE 2', 'T-SNE 3']]
-        plot3d(datasets, labels, names, plot_names, reduct)
+    supervised = evaluate_supervised_external(lt2, predict)
+    print(supervised)
 
 
-def apply_evaluation(x, label_true, params, names, database_name):
+def apply_evaluation(x, label_true, labels, names, database_name):
     """
     Apply all the evaluations to the implemented algorithms and classify in a dataframe.
     :param x: 2D data array of size (rows, features).
     :param label_true: labels of the real classification extracted from the database.
-    :param params: parameters for the k-means algorithm.
+    :param labels: predicted labels.
     :param names: list of all the evaluated algorithms.
     :param database_name: name of the database that is being tested
     :return: a dataframe with the evaluation results for algorithms implemented in this practise.
@@ -104,16 +53,13 @@ def apply_evaluation(x, label_true, params, names, database_name):
         act_name = names[i]
         act_data = x[i]
 
-        algorithm = KMeans(k=params['k'], seed=params['seed'], max_it=params['max_it'], tol=params['tol'])
-        labels = algorithm.fit_predict(act_data)
-
-        unsupervised = evaluate_unsupervised_internal(act_data, labels)
+        # unsupervised = evaluate_unsupervised_internal(act_data, labels)
         supervised = evaluate_supervised_external(label_true, labels)
 
-        row = {**dict(Names=act_name), **supervised, **unsupervised}
+        row = {**dict(Names=act_name), **supervised}  # , **unsupervised
         rows.append(row)
     df_results = pd.DataFrame(rows)
-    set_output(df_results, 'pca_analysis_'+database_name)
+    set_output(df_results, 'knn_analysis_'+database_name)
 
 
 def preprocess_database(database: str):
@@ -191,3 +137,4 @@ def set_output(results, database_name):
     results.to_csv("./results/" + database_name + ".csv", sep='\t', encoding='utf-8', index=False)
 
     print("\nThe CSV output files are created in results folder of this project\n")
+
