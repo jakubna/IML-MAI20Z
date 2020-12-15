@@ -5,36 +5,76 @@ from evaluation.plot import *
 from evaluation.evaluate import *
 import pandas as pd
 from algorithms.kNNAlgorithm import kNNAlgorithm
+import itertools
+import time
 
 
-def apply_algorithms(x: np.ndarray, label_true, params):
+def best_knn(x: np.ndarray, label_true):
     """
     Apply the implemented algorithms, dbscan and evaluate the obtained results.
-    :param x: 2D data array of size (rows, features).
-    :param label_true: labels of the real classification extracted from the database.
-    :param params: dictionary with all the parameters required to execute the algorithms.
+    :param x: data array of size (n_folds), each element is a matrix that represent the elements in one fold.
+    :param label_true: data array of size (n_folds), each element is one fold results solution.
     """
 
-    # get our PCA
-    knn = kNNAlgorithm(n_neighbors=params['n_neighbors'], weights=params['weights'], policy=params['policy'],
-                       metric=params['metric'])
-    #partitionate the database
-    siz = int(x.shape[0]/2)
-    sp_x1 = x[:siz]
-    sp_x2 = x[siz:]
-    lt1 = label_true[:siz]
-    lt2 = label_true[siz:]
+    # params = dict(n_neighbors=[1, 3, 5, 7], weights=['equal', 'mutual_info', 'relief'],
+    #              policy=['majority_class', 'inverse_distance', 'sheppard_work'], metric=['minkowski', 'euclidean'])
+    params = [[1, 3, 5, 7], ['equal', 'mutual_info', 'relief'], ['majority_class', 'inverse_distance', 'sheppard_work'],
+              ['minkowski', 'euclidean']]
 
-    sp_x1 = x
-    sp_x2 = x
-    lt1 = label_true
-    lt2 = label_true
+    # get all combinations that must be evaluated
+    pos_sol = np.array(list(itertools.product(*params)))
+    full_results = []
 
-    knn.fit(sp_x1, lt1)
-    predict = knn.predict(sp_x2)
+    for act in pos_sol:
+        # get our KNN
+        av_results = dict(metrics=act, accuracy=0, precision=0, recall=0, f1score=0, time=0)
+        knn = kNNAlgorithm(n_neighbors=act[0], weights=act[1], policy=act[2], metric=act[3])
+        for i in range(x.shape[0]):
+            x_train, y_train, x_validate, y_validate = get_current_xy_matrix(x, label_true, i)
+            t0 = time.time()
+            knn.fit(x_train, y_train)
+            predict = knn.predict(x_validate)
+            t1 = time.time() - t0
 
-    supervised = evaluate_supervised_external(lt2, predict)
-    print(supervised)
+            # evaluate the knn
+            supervised = evaluate_supervised_external(y_validate, predict)
+
+            # sum the new metrics obtained to make average
+            metrics = ['accuracy', 'precision', 'recall', 'f1score']
+            for m in metrics:
+                av_results[m] += supervised[m]
+            av_results['time'] = t1
+
+        # make the average
+        metrics = ['accuracy', 'precision', 'recall', 'f1score', 'time']
+        for m in metrics:
+            av_results[m] = av_results[m] / 10
+
+        full_results.append(av_results)
+    set_output(full_results, "all_knn_metrics_cases")
+    # find the best one
+
+
+def get_current_xy_matrix(x: np.ndarray, y: np.ndarray, i):
+    """
+    Get the current x_train, y_train, x_validate, y_validate for this cross validation loop
+    :param x: data array of size (n_folds), each element is a matrix that represent the elements in one fold.
+    :param y: data array of size (n_folds), each element is one fold results solution.
+    :param i: current validation fold index in x array.
+    :return: x_train, y_train, x_validate, y_validate.
+    """
+    neo_x_val = np.ndarray(x[i])
+    neo_y_val = np.ndarray(y[i])
+    neo_x = None
+    neo_y = None
+    for a in range(x.shape[0]):
+        if a != i and neo_x is None:
+            neo_x = x[a]
+            neo_y = y[a]
+        if a != i and neo_x is not None:
+            neo_x = np.concatenate((neo_x, x[a]))
+            neo_y = np.concatenate(neo_y, y[a])
+    return neo_x, neo_y, neo_x_val, neo_y_val
 
 
 def apply_evaluation(x, label_true, labels, names, database_name):
