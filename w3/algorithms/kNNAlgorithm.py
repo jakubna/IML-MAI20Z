@@ -3,7 +3,7 @@ import numpy as np
 from scipy.spatial import distance
 from collections import Counter
 from sklearn.feature_selection import mutual_info_classif
-from sklearn_relief import ReliefF
+from ReliefF import ReliefF
 
 
 class kNNAlgorithm:
@@ -13,7 +13,7 @@ class kNNAlgorithm:
         :param n_neighbors: Number of neighbors to use by default for kneighbors queries.
         :param policy: policy dor the algorithm used in prediction. Possible values: 'majority_class',
                         'inverse_distance','sheppard_work'.
-        :param weights: weights policy of the function. Possible values: 'equal', 'mutual_info', 'relief', 'correlation'
+        :param weights: weights policy of the function. Possible values: 'equal', 'mutual_info', 'relief'.
         :param metric: The distance metric to use for the tree
         """
         if n_neighbors < 1:
@@ -22,7 +22,7 @@ class kNNAlgorithm:
             raise ValueError('Param policy can be: uniform or distance')
         if metric not in ['minkowski', 'euclidean']:
             raise ValueError('Param metric can be: minkowski or euclidean')
-        if weights not in ['mutual_info', 'relief', 'correlation', 'equal']:
+        if weights not in ['mutual_info', 'relief', 'equal']:
             raise ValueError('Param weights can be: equal, relief, mutual_info or correlation')
 
         self.n_neighbors = n_neighbors
@@ -132,15 +132,8 @@ class kNNAlgorithm:
         if self.weights == 'equal':
             return x
         if self.weights == 'relief':
-            fs = ReliefF(n_neighbors=self.n_neighbors, n_features_to_keep=9)
-            aux = np.array(fs.fit(x, self.y_train))
-            print(aux.shape)
-            return x * aux
+            fs = ReliefF(n_neighbors=self.n_neighbors, n_features_to_keep=x.shape[1])
+            return np.array(fs.fit_transform(x, np.array(self.y_train)))
         if self.weights == 'mutual_info':
-            aux = np.array(mutual_info_classif(x, self.y_train, n_neighbors=self.n_neighbors))
-            print(aux.shape)
-            return x * aux
-        if self.weights == 'correlation':
-            return np.array(self.y_train)
-        raise ValueError('Param weights can be: equal, relief, mutual_info or correlation')
-
+            return x * np.array(mutual_info_classif(x, self.y_train, n_neighbors=self.n_neighbors))
+        raise ValueError('Param weights can be: equal, relief, mutual_info')
