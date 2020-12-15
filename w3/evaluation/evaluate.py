@@ -11,9 +11,9 @@ def evaluate_supervised_external(labels_true, labels_predicted):
     """
     supervised_scores = dict(
         accuracy=accuracy_score(labels_true, labels_predicted),
-        precision=precision_score(labels_true, labels_predicted),
-        recall=recall_score(labels_true, labels_predicted),
-        f1score=f1_score(labels_true, labels_predicted),
+        precision=precision_score(labels_true, labels_predicted, average=None),
+        recall=recall_score(labels_true, labels_predicted, average=None),
+        f1score=f1_score(labels_true, labels_predicted, average=None),
         confusion_matrix=confusion_matrix(labels_true, labels_predicted),
         classification_report=classification_report(labels_true, labels_predicted),
         adjusted_mutual_info_score=adjusted_mutual_info_score(labels_true, labels_predicted, 'arithmetic'),
