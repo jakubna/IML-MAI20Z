@@ -120,7 +120,7 @@ def get_best_results(results, reduced = False):
   
   print(best_results)
   
-  'theoretically, the best configuration is the first row
+  #theoretically, the best configuration is the first row
   
   return best_results
   
