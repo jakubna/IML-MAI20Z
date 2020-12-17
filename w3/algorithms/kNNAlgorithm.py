@@ -1,4 +1,3 @@
-from numpy import linalg as LA
 import numpy as np
 from scipy.spatial import distance
 from collections import Counter
@@ -20,8 +19,8 @@ class kNNAlgorithm:
             raise ValueError('n_neighbors must be a positive number')
         if policy not in ['majority_class', 'inverse_distance', 'sheppard_work']:
             raise ValueError('Param policy can be: uniform or distance')
-        if metric not in ['minkowski', 'euclidean']:
-            raise ValueError('Param metric can be: minkowski or euclidean')
+        if metric not in ['minkowski', 'euclidean', 'chebyshev', 'canberra']:
+            raise ValueError('Param metric can be: minkowski or euclidean or chebyshev or canberra')
         if weights not in ['mutual_info', 'relief', 'equal']:
             raise ValueError('Param weights can be: equal, relief, mutual_info or correlation')
 
@@ -116,12 +115,44 @@ class kNNAlgorithm:
 
     def _calculate_distance(self, x: np.ndarray, y: np.ndarray):
         """
-        Calculate distance between 2 elements using the metric depending on the algorithm ('euclidean' or 'cityblock').
+        Calculate distance between 2 elements using the metric depending on the algorithm 
+        ('euclidean', 'cityblock', 'canberra', 'chebyshev').
         :param x: 1D vector with all x attributes.
         :param y: 1D vector with all y attributes.
         :return: Distance between both vectors using the specified metric.
         """
-        return distance.cdist(np.array(x), np.array(y), metric=self.metric)
+        if self.metric == 'euclidean' or self.metric == 'cityblock':
+            return distance.cdist(np.array(x), np.array(y), metric=self.metric)
+        elif self.metric == 'canberra':
+            distances = np.zeros((x.shape[0], y.shape[0]))
+            for i in range(x.shape[0]):
+                for j in range(y.shape[0]):
+                    distances[i, j] = self._canberra_distance(x[i], y[j])
+            return distances
+        elif self.metric == 'chebyshev':
+            distances = np.zeros((x.shape[0], y.shape[0]))
+            for i in range(x.shape[0]):
+                for j in range(y.shape[0]):
+                    distances[i, j] = self._chebyshev_distance(x[i], y[j])
+            return distances
+
+    def _chebyshev_distance(self, p_vec, q_vec):
+        """
+        This method implements the Chebyshev distance metric
+        :param p_vec: vector one
+        :param q_vec: vector two
+        :return: the Chebyshev distance between vector one and two
+        """
+        return max(np.fabs(p_vec - q_vec))
+
+    def _canberra_distance(self, p_vec, q_vec):
+        """
+        This method implements the canberra distance metric
+        :param p_vec: vector one
+        :param q_vec: vector two
+        :return: the canberra distance between vector one and two
+        """
+        return np.sum(np.nan_to_num(np.fabs(p_vec - q_vec) / (np.fabs(p_vec) + np.fabs(q_vec))))
 
     def weights_values(self, x: np.ndarray):
         """
