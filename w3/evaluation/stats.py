@@ -41,7 +41,7 @@ def stats_mat(results, metric):
   compute the matrix containing all resultes of compute_stat_ind for each configuration model
   param results: structure with all accuracy and time obtaiened for each run (10) of each configuration model
   return one matrix containing all results of compute_stat_ind for each configuration model 
-        
+  '''     
   
   stats_accuracy = np.full(shape=(len(results), len(results), 2), fill_value=np.nan)
   stats_time = np.full(shape=(len(results), len(results), 2), fill_value=np.nan)
