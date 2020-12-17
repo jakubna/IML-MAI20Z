@@ -2,6 +2,7 @@ import os
 from scipy.io import arff
 import numpy as np
 from dataPreprocessing.adult import preprocess as preprocess_adult
+from dataPreprocessing.grid import preprocess as preprocess_grid
 
 def read_and_preprocess_database(database: str):
     """
@@ -17,7 +18,7 @@ def read_and_preprocess_database(database: str):
     if name == "adult":
         preprocess = preprocess_adult
     elif name == "grid":
-        pass
+        preprocess = preprocess_grid
 
     for i in range(10):
         fold_path = name + ".fold.00000" + str(i)
