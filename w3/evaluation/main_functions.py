@@ -1,5 +1,3 @@
-from dataPreprocessing.breast import preprocess as preprocess_breast
-from dataPreprocessing.cmc import preprocess as preprocess_cmc
 from dataPreprocessing.adult import preprocess as preprocess_adult
 from evaluation.plot import *
 from evaluation.evaluate import *
@@ -109,11 +107,7 @@ def preprocess_database(database: str):
     :return: features of the preprocessed database(processed database, true classification results, complete dataframe).
     """
     # processed -> db, label_true, data_frame
-    if database == "breast":
-        processed = preprocess_breast()
-    elif database == "cmc":
-        processed = preprocess_cmc()
-    elif database == "adult":
+    if database == "adult":
         processed = preprocess_adult()
     else:
         raise ValueError('database not found')
