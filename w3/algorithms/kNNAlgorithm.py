@@ -97,7 +97,7 @@ class kNNAlgorithm:
             for n in range(len(neigh_ind)):
                 for index in range(len(n)):
                     dist = neigh_dist[n][index]
-                    label = neigh_ind[n][index]
+                    label = y_train[neigh_ind[n][index]]
                     class_counter[label] = + 1 / dist
                 y_pred.append(class_counter.most_common(1)[0][0])
             return y_pred
@@ -108,7 +108,7 @@ class kNNAlgorithm:
             for n in range(len(neigh_ind)):
                 for index in range(len(n)):
                     dist = neigh_dist[n][index]
-                    label = neigh_ind[n][index]
+                    label = y_train[neigh_ind[n][index]]
                     class_counter[label] = + np.exp(-dist)
                 y_pred.append(class_counter.most_common(1)[0][0])
             return y_pred
