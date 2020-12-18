@@ -119,8 +119,8 @@ def get_best_results(results, reduced = False):
   time=[]
   model_list=[]
   for i, model1 in enumerate(results):
-    res1_acc = list(map(lambda x: x['accuracy'], model1['results']))
-    res1_time = list(map(lambda x: x['time'], model1['results']))
+    res1_acc = list(model1['accuracy'])
+    res1_time = list(model1['time'])
     res1_k = model1['metrics'][0]
     res1_w = model1['metrics'][1]
     res1_v = model1['metrics'][2]
