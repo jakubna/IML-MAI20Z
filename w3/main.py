@@ -1,22 +1,27 @@
 from evaluation.main_functions import *
+from dataPreprocessing.read_data import read_and_preprocess_database as read_and_preprocess_database
 
 
 def main():
     """
     choose the dataset to analyze.
      OPTIONS:
-        -> "breast"
-        -> "cmc"
-        -> "adult"  (warning huge dataset, it can take some minutes to run all the algorithm)
+        -> "grid"
+        -> "hypothyroid"
     """
-    database_name = "cmc"
-    res = preprocess_database(database_name)
+    database_name = "grid"
+    res_db = read_and_preprocess_database(database_name)
 
-    # make sure that the names of the rows are column names of the database and n_components=length of names_row
-    # components = get_features(res['data_frame'], parameters['n_components'])
+    # name of the file where you want to store and read the metrics obtained
+    n_file = "grid_metrics"
 
-    # apply all the algorithms
-    best_knn(res['db'], res['label_true'])
+    # apply knn to all the possible combination of parameters
+    best_knn_metrics(res_db, n_file)
+
+    # find the best knn parameter combination
+    best_knn_get_best_comb(n_file)
+
+    # get the reduction of the best knn
 
 
 if __name__ == "__main__":
