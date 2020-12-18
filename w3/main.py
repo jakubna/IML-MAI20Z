@@ -13,10 +13,10 @@ def main():
     res_db = read_database(database_name)
 
     # name of the file where you want to store and read the metrics obtained
-    n_file = "grid_metrics"
+    n_file = database_name+"_metrics"
 
     # apply knn to all the possible combination of parameters
-    best_knn_metrics(res_db, n_file, database_name)
+    # best_knn_metrics(res_db, n_file, database_name)
 
     # find the best knn parameter combination
     best_knn_get_best_comb(n_file)
