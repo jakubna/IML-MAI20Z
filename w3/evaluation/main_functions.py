@@ -1,9 +1,8 @@
-from dataPreprocessing.hypothyroid import preprocess as preprocess_hypothyroid
-from dataPreprocessing.grid import preprocess as preprocess_grid
 from evaluation.plot import *
 from evaluation.evaluate import *
 import pandas as pd
 from algorithms.kNNAlgorithm import kNNAlgorithm
+from dataPreprocessing.read_data import preprocess_data
 import itertools
 import time
 
@@ -21,7 +20,7 @@ def best_knn_metrics(k_x: np.ndarray, name_file, name_db):
     # get all combinations that must be evaluated
     pos_sol = np.array(list(itertools.product(*params)))
     print("Number of possible combinations:", pos_sol.shape[0])
-    #pos_sol = [pos_sol[18]]
+    # pos_sol = [pos_sol[18]]
     full_results = []
 
     for act in pos_sol:
@@ -32,7 +31,7 @@ def best_knn_metrics(k_x: np.ndarray, name_file, name_db):
         knn = kNNAlgorithm(n_neighbors=int(act[0]), policy=act[2], metric=act[3])
 
         # preprocess de data folds
-        processed_k_x = preprocess_fold(k_x, act[1], int(act[0]), name_db)
+        processed_k_x = preprocess_data(k_x, act[1], int(act[0]), name_db)
 
         for act_fold in processed_k_x:
             # get data from actual fold
@@ -72,31 +71,6 @@ def best_knn_get_best_comb(name_file):
     metrics = read_csv(name_file)
     print(type(metrics))
     print(metrics)
-
-
-def preprocess_fold(folds, weights, n_neigh, name):
-    """
-    Apply the implemented knn for each possible parameter combination, extract the metrics and store to a csv file.
-    :param folds: folds (validation_data, train_data, meta_data) that we are going to preprocess
-    :param weights: weights policy that we are going to use.
-    :param n_neigh: number of neighbours of our execution
-    :param name: string with the name of our dataset.
-    """
-    if name == "hypothyroid":
-        preprocess = preprocess_hypothyroid
-    elif name == "grid":
-        preprocess = preprocess_grid
-
-    preprocessed_folds = []
-    for act in folds:
-        (X_train, y_train), (X_val, y_val) = preprocess(act['db_train'], act['db_val'], act['meta'], weights, n_neigh)
-        preprocessed_folds.append({
-            'X_train': X_train,
-            'y_train': y_train,
-            'X_val': X_val,
-            'y_val': y_val
-        })
-    return preprocessed_folds
 
 
 def apply_evaluation(x, label_true, labels, names, database_name):
@@ -141,4 +115,3 @@ def read_csv(name_file):
     """
     results = pd.read_csv("./results/" + name_file + ".csv", sep='\t', encoding='utf-8')
     return np.array(results.to_dict(orient='records'))
-
