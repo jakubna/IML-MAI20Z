@@ -1,6 +1,9 @@
 import numpy as np
+import pandas as pd
 from scipy.stats import ttest_ind
 
+#analyse two by two configurations usinf t-test and compare the overall performances of classifiers counting the number of data sets on which an algorithm is the overall winner
+#call get_best_results(results, reduced = False)
 def compute_stat_test(sample1, sample2):
 ''' 
     Calculate the t-test on TWO RELATED samples of scores. 
@@ -113,8 +116,28 @@ def get_best_results(results, reduced = False):
   return a dataframe containing the average accuracy and time of the statiscal best configurations sorted by the KPI = accuracy/time 
   '''
   
-  best_models = get_best_ind(results, reduced)
-  best_results = results.groupby(['model']).mean().reset_index().iloc[intersection_,:]
+  accuracy=[]
+  time=[]
+  model_list=[]
+  for i, model1 in enumerate(results):
+    res1_acc = list(map(lambda x: x['accuracy'], model1['results']))
+    res1_time = list(map(lambda x: x['time'], model1['results']))
+    res1_k = model1['metrics'][0]
+    res1_w = model1['metrics'][1]
+    res1_v = model1['metrics'][2]
+    res1_d = model1['metrics'][3]
+    model=[str(res1_k)+'-'+str(res1_w)+'-'+str(res1_v)+'-'+str(res1_d)]*10
+    accuracy=accuracy+res1_acc
+    time=time+res1_time
+    model_list=model_list+model
+
+  df_results=pd.DataFrame()
+  df_results['model']=model_list
+  df_results['accuracy']=accuracy
+  df_results['time']=time
+  
+  best_models = get_best_ind(df_results, reduced)
+  best_results = df_results.groupby(['model']).mean().reset_index().iloc[intersection_,:]
   best_results['accuracy/time'] = best_results['accuracy']/best_results['time']
   best_results=best_results.sort_values(['accuracy/time'],ascending=False)
   
