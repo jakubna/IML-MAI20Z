@@ -1,7 +1,7 @@
 import os
 from scipy.io import arff
 import numpy as np
-from dataPreprocessing.adult import preprocess as preprocess_adult
+from dataPreprocessing.hypothyroid import preprocess as preprocess_hypothyroid
 from dataPreprocessing.grid import preprocess as preprocess_grid
 
 def read_and_preprocess_database(database: str):
@@ -13,10 +13,10 @@ def read_and_preprocess_database(database: str):
     name = database
     folds = []
 
-    if name not in ['adult', 'grid']:
+    if name not in ['hypothyroid', 'grid']:
         raise ValueError('Database not found')
-    if name == "adult":
-        preprocess = preprocess_adult
+    if name == "hypothyroid":
+        preprocess = preprocess_hypothyroid
     elif name == "grid":
         preprocess = preprocess_grid
 
