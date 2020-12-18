@@ -7,72 +7,64 @@ import itertools
 import time
 
 
-def best_knn(x: np.ndarray, label_true):
+def best_knn_metrics(k_x: np.ndarray, name_file):
     """
-    Apply the implemented algorithms, dbscan and evaluate the obtained results.
-    :param x: data array of size (n_folds), each element is a matrix that represent the elements in one fold.
-    :param label_true: data array of size (n_folds), each element is one fold results solution.
+    Apply the implemented knn for each possible parameter combination, extract the metrics and store to a csv file.
+    :param k_x: data array of size (n_folds), each element is a dictionary with X_train, y_train, X_val, y_val.
+    :param name_file: the name of the file on where you want to write
     """
 
-    # params = dict(n_neighbors=[1, 3, 5, 7], weights=['equal', 'mutual_info', 'relief'],
-    #              policy=['majority_class', 'inverse_distance', 'sheppard_work'], metric=['minkowski', 'euclidean'])
     params = [[1, 3, 5, 7], ['equal', 'mutual_info', 'relief'], ['majority_class', 'inverse_distance', 'sheppard_work'],
-              ['minkowski', 'euclidean']]
+              ['minkowski', 'euclidean', 'chebyshev']]  # , 'chebyshev' 'canberra'
 
     # get all combinations that must be evaluated
     pos_sol = np.array(list(itertools.product(*params)))
+    print("Number of possible combinations:", pos_sol.shape[0])
+    pos_sol = [pos_sol[3]]
     full_results = []
 
     for act in pos_sol:
         # get our KNN
-        av_results = dict(metrics=act, accuracy=0, precision=0, recall=0, f1score=0, time=0)
-        knn = kNNAlgorithm(n_neighbors=act[0], weights=act[1], policy=act[2], metric=act[3])
-        for i in range(x.shape[0]):
-            x_train, y_train, x_validate, y_validate = get_current_xy_matrix(x, label_true, i)
+        print(act)
+        av_results = dict(metrics=act, av_accuracy=0, av_time=0, accuracy=[], time=[])
+        knn = kNNAlgorithm(n_neighbors=int(act[0]), weights=act[1], policy=act[2], metric=act[3])
+        for act_fold in k_x:
+            x_train = act_fold['X_train']
+            y_train = act_fold['y_train']
+            x_validate = act_fold['X_val']
+            y_validate = act_fold['y_val']
             t0 = time.time()
             knn.fit(x_train, y_train)
             predict = knn.predict(x_validate)
             t1 = time.time() - t0
 
             # evaluate the knn
-            supervised = evaluate_supervised_external(y_validate, predict)
+            supervised = evaluate_accuracy(y_validate, predict)
 
             # sum the new metrics obtained to make average
-            metrics = ['accuracy', 'precision', 'recall', 'f1score']
-            for m in metrics:
-                av_results[m] += supervised[m]
-            av_results['time'] = t1
+            av_results['accuracy'].append(supervised['accuracy'])
+            av_results['time'].append(t1)
 
-        # make the average
-        metrics = ['accuracy', 'precision', 'recall', 'f1score', 'time']
-        for m in metrics:
-            av_results[m] = av_results[m] / 10
+        # make the average results
+        av_results['accuracy'] = np.array(av_results['accuracy'])
+        av_results['time'] = np.array(av_results['time'])
+        av_results['av_accuracy'] = np.average(av_results['accuracy'])
+        av_results['av_time'] = np.average(av_results['time'])
 
         full_results.append(av_results)
-    set_output(full_results, "all_knn_metrics_cases")
+    df_results = pd.DataFrame(full_results)
+    set_output(df_results, name_file)
     # find the best one
 
 
-def get_current_xy_matrix(x: np.ndarray, y: np.ndarray, i):
+def best_knn_get_best_comb(name_file):
     """
-    Get the current x_train, y_train, x_validate, y_validate for this cross validation loop
-    :param x: data array of size (n_folds), each element is a matrix that represent the elements in one fold.
-    :param y: data array of size (n_folds), each element is one fold results solution.
-    :param i: current validation fold index in x array.
-    :return: x_train, y_train, x_validate, y_validate.
+    Apply the evaluation of the metrics extracted for each combination of parameters.
+    :param name_file: the name of the file on where you want to read the metrics.
     """
-    neo_x_val = np.ndarray(x[i])
-    neo_y_val = np.ndarray(y[i])
-    neo_x = None
-    neo_y = None
-    for a in range(x.shape[0]):
-        if a != i and neo_x is None:
-            neo_x = x[a]
-            neo_y = y[a]
-        if a != i and neo_x is not None:
-            neo_x = np.concatenate((neo_x, x[a]))
-            neo_y = np.concatenate(neo_y, y[a])
-    return neo_x, neo_y, neo_x_val, neo_y_val
+    metrics = read_csv(name_file)
+    print(type(metrics))
+    print(metrics)
 
 
 def apply_evaluation(x, label_true, labels, names, database_name):
@@ -171,4 +163,13 @@ def set_output(results, database_name):
     results.to_csv("./results/" + database_name + ".csv", sep='\t', encoding='utf-8', index=False)
 
     print("\nThe CSV output files are created in results folder of this project\n")
+
+
+def read_csv(name_file):
+    """
+    Read the csv file and extract the metrics for each combination.
+    :param name_file: the name of the file on where you want to read the metrics.
+    """
+    results = pd.read_csv("./results/" + name_file + ".csv", sep='\t', encoding='utf-8')
+    return np.array(results.to_dict(orient='records'))
 
