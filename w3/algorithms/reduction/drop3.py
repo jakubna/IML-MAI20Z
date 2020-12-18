@@ -6,7 +6,7 @@ from algorithms.KNNAlgorithm import KNNLAlgorithm
 from copy import deepcopy
 
 
-def __drop1_reduction(knn: KNNLAlgorithm, X: np.ndarray, y: np.ndarray):
+def drop3_reduction(knn: KNNLAlgorithm, X: np.ndarray, y: np.ndarray):
     S = list(range(X.shape[0]))
 
     remove_intances = []
