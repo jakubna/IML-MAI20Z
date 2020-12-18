@@ -111,7 +111,7 @@ def get_best_ind(results, reduced = False):
 def get_best_results(results, reduced = False):
   '''
   Get the results of accuracy, time and storage (if reduced = True) of the statiscal bests configurations 
-  param results: dictionary with all accuracy and time obtaiened for each run (10) of each configuration model
+  param results: array of dictionaries with all accuracy and time obtaiened for each run (10) of each configuration model
   param reduced: if the data was reduced and the results has a column 'storage' it shoud be set to True
   return a dataframe containing the average accuracy and time of the statiscal best configurations sorted by the KPI = accuracy/time 
   '''
