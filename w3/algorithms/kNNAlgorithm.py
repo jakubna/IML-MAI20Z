@@ -94,10 +94,12 @@ class kNNAlgorithm:
             class_counter = Counter()
             y_pred = []
             neigh_dist, neigh_ind = self.kneighbors(self.X_test, return_distance=True)
-            for n in range(len(neigh_ind)):
-                for index in range(len(n)):
+            for n, neigh in enumerate(neigh_ind):
+                for index,nneigh in enumerate(neigh):
                     dist = neigh_dist[n][index]
                     label = y_train[neigh_ind[n][index]]
+                    if dist ==0:
+                        dist=0.000001
                     class_counter[label] = + 1 / dist
                 y_pred.append(class_counter.most_common(1)[0][0])
             return y_pred
@@ -105,8 +107,8 @@ class kNNAlgorithm:
             class_counter = Counter()
             y_pred = []
             neigh_dist, neigh_ind = self.kneighbors(self.X_test, return_distance=True)
-            for n in range(len(neigh_ind)):
-                for index in range(len(n)):
+            for n, neigh in enumerate(neigh_ind):
+                for index,nneigh in enumerate(neigh):
                     dist = neigh_dist[n][index]
                     label = y_train[neigh_ind[n][index]]
                     class_counter[label] = + np.exp(-dist)
