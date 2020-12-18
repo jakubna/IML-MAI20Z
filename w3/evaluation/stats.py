@@ -46,10 +46,9 @@ def stats_mat(results, metric):
   return one matrix containing all results of compute_stat_ind for each configuration model 
   '''     
   
-  stats_accuracy = np.full(shape=(len(results), len(results), 2), fill_value=np.nan)
-  stats_time = np.full(shape=(len(results), len(results), 2), fill_value=np.nan)
+  stats = np.full(shape=(len(results), len(results), 2), fill_value=np.nan)
   
-  'considering results as a dataframe with columns= ['model', 'accuracy', 'time']
+  #considering results as a dataframe with columns= ['model', 'accuracy', 'time']
   
   for i, model1 in enumerate(list(results['model'].unique())):
     for j, model2 in enumerate(list(results['model'].unique())):
@@ -137,7 +136,7 @@ def get_best_results(results, reduced = False):
   df_results['time']=time
   
   best_models = get_best_ind(df_results, reduced)
-  best_results = df_results.groupby(['model']).mean().reset_index().iloc[intersection_,:]
+  best_results = df_results.groupby(['model']).mean().reset_index().iloc[best_models,:]
   best_results['accuracy/time'] = best_results['accuracy']/best_results['time']
   best_results=best_results.sort_values(['accuracy/time'],ascending=False)
   
