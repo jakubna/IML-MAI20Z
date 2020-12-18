@@ -1,144 +1,157 @@
-from dataPreprocessing.hypothyroid import preprocess as preprocess_hypothyroid
-from dataPreprocessing.grid import preprocess as preprocess_grid
-from evaluation.plot import *
-from evaluation.evaluate import *
 import pandas as pd
-from algorithms.kNNAlgorithm import kNNAlgorithm
-import itertools
-import time
+import numpy as np
+from sklearn.preprocessing import MinMaxScaler, OneHotEncoder
+from dataPreprocessing.utils import label_encoding as label_encoding
+from sklearn.feature_selection import mutual_info_classif
+from ReliefF import ReliefF
 
 
-def best_knn_metrics(k_x: np.ndarray, name_file, name_db):
+def preprocess(dataset_train, dataset_val, meta, weights, n_neigh):
     """
-    Apply the implemented knn for each possible parameter combination, extract the metrics and store to a csv file.
-    :param k_x: data array of size (n_folds), each element is a dictionary with validation_data, train_data, meta_data.
-    :param name_file: the name of the file on where you want to write.
-    :param name_db: string with the name of our dataset.
+    Apply the personalized operations to preprocess the database.
     """
-    params = [[1, 3, 5, 7], ['equal', 'mutual_info', 'relief'], ['majority_class', 'inverse_distance', 'sheppard_work'],
-              ['minkowski', 'euclidean', 'chebyshev']]  # , 'chebyshev' 'canberra'
+    # load dataset
+    column_names = meta.names()  # list containing column names
+    column_types = meta.types()  # list containing column types
+    column_types_dict = dict(zip(column_names[:-1], column_types[:-1]))  # dictionary containing column names and types
 
-    # get all combinations that must be evaluated
-    pos_sol = np.array(list(itertools.product(*params)))
-    print("Number of possible combinations:", pos_sol.shape[0])
-    #pos_sol = [pos_sol[18]]
-    full_results = []
+    # create a initial pandas dataframe
+    df_train = pd.DataFrame(data=dataset_train, columns=column_names)
+    df_val = pd.DataFrame(data=dataset_val, columns=column_names)
 
-    for act in pos_sol:
-        # get our KNN
-        print(act)
+    # detect and replace missing values
+    if df_train.isnull().any().sum() > 0 or df_val.isnull().any().sum() > 0:
+        for x in column_names[:-1]:
+            if column_types_dict[x] == 'nominal':
+                top_frequent_value = df_train[x].describe()['top']
+                df_train[x].fillna(top_frequent_value, inplace=True)
+                df_val[x].fillna(top_frequent_value, inplace=True)
+            else:
+                if x != "TBG":
+                    median = df_train[x].median()
+                    df_train[x].fillna(median, inplace=True)
+                    df_val[x].fillna(median, inplace=True)
 
-        av_results = dict(metrics=act, av_accuracy=0, av_time=0, accuracy=[], time=[])
-        knn = kNNAlgorithm(n_neighbors=int(act[0]), policy=act[2], metric=act[3])
+    # split-out dataset
+    X_train = df_train.iloc[:, :-1].copy()
+    Y_train = df_train.iloc[:, -1].copy()
 
-        # preprocess de data folds
-        processed_k_x = preprocess_fold(k_x, act[1], int(act[0]), name_db)
+    X_val = df_val.iloc[:, :-1].copy()
+    Y_val = df_val.iloc[:, -1].copy()
 
-        for act_fold in processed_k_x:
-            # get data from actual fold
-            x_train = act_fold['X_train']
-            y_train = act_fold['y_train']
-            x_validate = act_fold['X_val']
-            y_validate = act_fold['y_val']
-            t0 = time.time()
-            knn.fit(x_train, y_train)
-            predict = knn.predict(x_validate)
-            t1 = time.time() - t0
+    # name of columns with numerical features (we omit TBG feature, cause all data = Nan)
+    numerical_features = ['age',
+                          'TSH',
+                          'T3',
+                          'TT4',
+                          'T4U',
+                          'FTI']
+    # name of columns with categorical features
+    categorical_features = ['sex',
+                            'on_thyroxine',
+                            'query_on_thyroxine',
+                            'on_antithyroid_medication',
+                            'sick',
+                            'pregnant',
+                            'thyroid_surgery',
+                            'I131_treatment',
+                            'query_hypothyroid',
+                            'query_hyperthyroid',
+                            'lithium',
+                            'goitre',
+                            'hypopituitary',
+                            'psych',
+                            'TSH_measured',
+                            'T3_measured',
+                            'TT4_measured',
+                            'T4U_measured',
+                            'FTI_measured',
+                            'TBG_measured',
+                            'referral_source']
+    # create instance of one hot encoder
+    onehotencoder = OneHotEncoder(handle_unknown='ignore', sparse=False)
 
-            # evaluate the knn
-            supervised = evaluate_accuracy(y_validate, predict)
+    # transform categorical data
+    X_categorical_train = onehotencoder.fit_transform(X_train[categorical_features])
+    X_categorical_val = onehotencoder.transform(X_val[categorical_features])
 
-            # sum the new metrics obtained to make average
-            av_results['accuracy'].append(supervised['accuracy'])
-            av_results['time'].append(t1)
+    columns = onehotencoder.get_feature_names(input_features=categorical_features)
 
-        # make the average results
-        av_results['accuracy'] = np.array(av_results['accuracy'])
-        av_results['time'] = np.array(av_results['time'])
-        av_results['av_accuracy'] = np.average(av_results['accuracy'])
-        av_results['av_time'] = np.average(av_results['time'])
+    X_categorical_train = pd.DataFrame(data=X_categorical_train, columns=columns)
+    X_categorical_val = pd.DataFrame(data=X_categorical_val, columns=columns)
 
-        full_results.append(av_results)
-    df_results = pd.DataFrame(full_results)
-    set_output(df_results, name_file)
-    # find the best one
+    # drop redundant column
+    columns_to_drop = ["on_thyroxine_b'f'",
+                       "query_on_thyroxine_b'f'",
+                       "on_antithyroid_medication_b'f'",
+                       "sick_b'f'",
+                       "pregnant_b'f'",
+                       "thyroid_surgery_b'f'",
+                       "I131_treatment_b'f'",
+                       "query_hypothyroid_b'f'",
+                       "query_hyperthyroid_b'f'",
+                       "lithium_b'f'",
+                       "goitre_b'f'",
+                       "hypopituitary_b'f'",
+                       "psych_b'f'",
+                       "TSH_measured_b'f'",
+                       "T3_measured_b'f'",
+                       "TT4_measured_b'f'",
+                       "T4U_measured_b'f'",
+                       "FTI_measured_b'f'"]
+    X_categorical_train = X_categorical_train.drop(columns=columns_to_drop)
+    X_categorical_val = X_categorical_val.drop(columns=columns_to_drop)
+
+    # fit MinMax scaler on data
+    norm = MinMaxScaler()
+
+    # transform numerical data
+    X_numerical_train = norm.fit_transform(X_train[numerical_features])
+    X_numerical_val = norm.transform(X_val[numerical_features])
+
+    X_numerical_train = pd.DataFrame(data=X_numerical_train, columns=numerical_features)
+    X_numerical_val = pd.DataFrame(data=X_numerical_val, columns=numerical_features)
+
+    # concatenate final preprocessed data set
+    X_preprocessed_train = pd.concat((X_categorical_train, X_numerical_train), axis=1)
+    X_preprocessed_val = pd.concat((X_categorical_val, X_numerical_val), axis=1)
+
+    X_norm_val = X_preprocessed_val.to_numpy()
+    X_norm_train = X_preprocessed_train.to_numpy()
+
+    # get the true labels values of the dataset
+    y_train = list(Y_train.iloc[:].apply(label_encoding,
+                                         classes=[b'negative', b'compensated_hypothyroid', b'primary_hypothyroid',
+                                                  b'secondary_hypothyroid']))
+    y_val = list(Y_val.iloc[:].apply(label_encoding,
+                                     classes=[b'negative', b'compensated_hypothyroid', b'primary_hypothyroid',
+                                              b'secondary_hypothyroid']))
+
+    # apply weights policies
+    wei = weights_values(X_norm_train, y_train, n_neigh, weights)
+
+    X_preprocessed_train = X_norm_train * wei
+    X_preprocessed_val = X_norm_val * wei
+
+    return (X_preprocessed_train, y_train), (X_preprocessed_val, y_val)
 
 
-def best_knn_get_best_comb(name_file):
+def weights_values(x: np.ndarray, y: np.array, n_neigh, weights):
     """
-    Apply the evaluation of the metrics extracted for each combination of parameters.
-    :param name_file: the name of the file on where you want to read the metrics.
-    """
-    metrics = read_csv(name_file)
-    print(type(metrics))
-    print(metrics)
-
-
-def preprocess_fold(folds, weights, n_neigh, name):
-    """
-    Apply the implemented knn for each possible parameter combination, extract the metrics and store to a csv file.
-    :param folds: folds (validation_data, train_data, meta_data) that we are going to preprocess
-    :param weights: weights policy that we are going to use.
-    :param n_neigh: number of neighbours of our execution
-    :param name: string with the name of our dataset.
-    """
-    if name == "hypothyroid":
-        preprocess = preprocess_hypothyroid
-    elif name == "grid":
-        preprocess = preprocess_grid
-
-    preprocessed_folds = []
-    for act in folds:
-        (X_train, y_train), (X_val, y_val) = preprocess(act['db_train'], act['db_val'], act['meta'], weights, n_neigh)
-        preprocessed_folds.append({
-            'X_train': X_train,
-            'y_train': y_train,
-            'X_val': X_val,
-            'y_val': y_val
-        })
-    return preprocessed_folds
-
-
-def apply_evaluation(x, label_true, labels, names, database_name):
-    """
-    Apply all the evaluations to the implemented algorithms and classify in a dataframe.
+    Create the weights vector for the problem
     :param x: 2D data array of size (rows, features).
-    :param label_true: labels of the real classification extracted from the database.
-    :param labels: predicted labels.
-    :param names: list of all the evaluated algorithms.
-    :param database_name: name of the database that is being tested
-    :return: a dataframe with the evaluation results for algorithms implemented in this practise.
+    :param y: data array of size (rows).
+    :param n_neigh: number of neighbors for knn
+    :param weights: policy of weights that we want to apply
+    Returns: weights vector in numpy format
     """
-    rows = []
-
-    for i in range(0, len(names)):
-        act_name = names[i]
-        act_data = x[i]
-
-        # unsupervised = evaluate_unsupervised_internal(act_data, labels)
-        supervised = evaluate_supervised_external(label_true, labels)
-
-        row = {**dict(Names=act_name), **supervised}  # , **unsupervised
-        rows.append(row)
-    df_results = pd.DataFrame(rows)
-    set_output(df_results, 'knn_analysis_'+database_name)
-
-
-def set_output(results, database_name):
-    # print result at the terminal
-    print(results)
-
-    # load results to a csv file
-    results.to_csv("./results/" + database_name + ".csv", sep='\t', encoding='utf-8', index=False)
-
-    print("\nThe CSV output files are created in results folder of this project\n")
-
-
-def read_csv(name_file):
-    """
-    Read the csv file and extract the metrics for each combination.
-    :param name_file: the name of the file on where you want to read the metrics.
-    """
-    results = pd.read_csv("./results/" + name_file + ".csv", sep='\t', encoding='utf-8')
-    return np.array(results.to_dict(orient='records'))
-
+    if weights == 'equal':
+        return np.ones(x.shape[1])
+    if weights == 'relief':
+        fs = ReliefF(n_neighbors=n_neigh, n_features_to_keep=x.shape[1])
+        rel = np.array(fs.fit(x, y).feature_scores)
+        return rel / np.linalg.norm(rel)
+    if weights == 'mutual_info':
+        w = np.array(mutual_info_classif(x, y, n_neighbors=n_neigh))
+        return w / np.linalg.norm(w)
+    raise ValueError('Param weights can be: equal, relief, mutual_info')
