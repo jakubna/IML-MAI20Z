@@ -3,7 +3,8 @@ import pandas as pd
 from scipy.stats import ttest_ind
 
 
-# analyse two by two configurations using t-test and compare the overall performances of classifiers counting the number of data sets on which an algorithm is the overall winner
+# analyse two by two configurations using t-test and compare the overall performances of classifiers counting the
+# number of data sets on which an algorithm is the overall winner
 # call get_best_results(results, reduced = False)
 def compute_stat_test(sample1, sample2):
     """
@@ -124,20 +125,12 @@ def get_best_results(results, reduced=False):
     time = []
     model_list = []
     for i, model1 in enumerate(results):
-        res1_acc = model1['accuracy']
-        res1_acc=list(np.fromstring(res1_acc[1:-1], dtype=np.float, sep=' '))
-        res1_time = model1['time']
-        res1_time=list(np.fromstring(res1_time[1:-1], dtype=np.float, sep=' '))
-        metrics=model1['metrics']
-        metrics=metrics.strip("']['").split(' ')
-        res1_k = metrics[0]
-        res1_w = metrics[1]
-        res1_v = metrics[2]
-        res1_d = metrics[3]
-        model = [str(res1_k) + "-" + str(res1_w) + '-' + str(res1_v) + '-' + str(res1_d)] * 10
-        accuracy = accuracy + res1_acc
-        time = time + res1_time
-        model_list = model_list + model
+        metrics = model1['metrics']
+        model = [metrics[0][1:-1] + "-" + metrics[1][1:-1] + '-' + metrics[2][1:-1] + '-' + metrics[3][1:-1]] * 10
+
+        accuracy += model1['accuracy']
+        time += model1['time']
+        model_list += model
 
     df_results = pd.DataFrame()
     df_results['model'] = model_list
@@ -148,10 +141,10 @@ def get_best_results(results, reduced=False):
     best_results = df_results.groupby(['model']).mean().reset_index().iloc[best_models, :]
     best_results['accuracy/time'] = best_results['accuracy'] / best_results['time']
     best_results = best_results.sort_values(['accuracy/time'], ascending=False)
-    best_results=best_results.reset_index()
-    best_results=best_results.drop(['index'],axis=1)
+    best_results = best_results.reset_index()
+    best_results = best_results.drop(['index'], axis=1)
 
-    #print(best_results)
+    # print(best_results)
 
     # theoretically, the best configuration is the first row
 
