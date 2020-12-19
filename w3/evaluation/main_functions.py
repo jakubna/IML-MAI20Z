@@ -131,6 +131,8 @@ def reduct_best_knn(name_file_input, k_x, name_db):
         av_results[i]['time'] = np.array(av_results[i]['time'])
         av_results[i]['av_accuracy'] = np.average(av_results[i]['accuracy'])
         av_results[i]['av_time'] = np.average(av_results[i]['time'])
+        av_results[i]['storage'] = np.array(av_results[i]['storage'])
+        av_results[i]['av_storage'] = np.average(av_results[i]['storage'])
 
     print(av_results)
 
