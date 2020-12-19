@@ -1,5 +1,9 @@
 from evaluation.plot import *
 from evaluation.evaluate import *
+from algorithms.reduction.drop3 import drop3_reduction
+from algorithms.reduction.enn import enn_reduction
+from algorithms.reduction.fcnn import fcnn_reduction
+from algorithms.reduction.menn import menn_reduction
 from evaluation.stats import get_best_results
 import pandas as pd
 from algorithms.kNNAlgorithm import kNNAlgorithm
@@ -61,43 +65,96 @@ def best_knn_metrics(k_x: np.ndarray, name_file, name_db):
         full_results.append(av_results)
     df_results = pd.DataFrame(full_results)
     set_output(df_results, name_file)
-    # find the best one
 
 
-def best_knn_get_best_comb(name_file):
+def best_knn_get_best_comb(name_file_input, name_file_output):
     """
     Apply the evaluation of the metrics extracted for each combination of parameters.
-    :param name_file: the name of the file on where you want to read the metrics.
+    :param name_file_input: the name of the file on where you want to read the metrics.
+    :param name_file_output: the name of the file on where you want to write the best combinations obtained.
     """
-    metrics = read_csv(name_file)
-    best = get_best_results(metrics)
-    print(type(best))
-    print(best)
+    # read the combination metrics
+    metrics = read_csv(name_file_input)
+
+    # get the bests combinations
+    bests = get_best_results(metrics)
+
+    # store the best combinations
+    set_output(bests, name_file_output)
 
 
-def apply_evaluation(x, label_true, labels, names, database_name):
+def reduct_best_knn(name_file_input, k_x, name_db):
     """
-    Apply all the evaluations to the implemented algorithms and classify in a dataframe.
-    :param x: 2D data array of size (rows, features).
-    :param label_true: labels of the real classification extracted from the database.
-    :param labels: predicted labels.
-    :param names: list of all the evaluated algorithms.
-    :param database_name: name of the database that is being tested
-    :return: a dataframe with the evaluation results for algorithms implemented in this practise.
+    Apply the reduction and make the analysis of the metrics extracted.
+    :param name_file_input: the name of the file on where you want to read the metrics.
+    :param k_x: data array of size (n_folds), each element is a dictionary with validation_data, train_data, meta_data.
+    :param name_db: string with the name of our dataset.
     """
-    rows = []
+    cases = ['full', 'enn', 'menn', 'fcnn', 'drop3']
+    # read the best combinations
+    best_list = read_csv(name_file_input, metrics=False)
 
-    for i in range(0, len(names)):
-        act_name = names[i]
-        act_data = x[i]
+    best = best_list.loc[[0]].to_dict(orient='records')[0]
+    comb = best['model'].split('-')
 
-        # unsupervised = evaluate_unsupervised_internal(act_data, labels)
-        supervised = evaluate_supervised_external(label_true, labels)
+    m = dict(metrics=comb, reduct='', av_accuracy=0, av_time=0, accuracy=[], time=[], storage=0, av_storage=[])
+    av_results = np.full(len(cases), m)
 
-        row = {**dict(Names=act_name), **supervised}  # , **unsupervised
-        rows.append(row)
-    df_results = pd.DataFrame(rows)
-    set_output(df_results, 'knn_analysis_'+database_name)
+    knn = kNNAlgorithm(n_neighbors=int(comb[0]), policy=comb[2], metric=comb[3])
+
+    # preprocess de data folds
+    processed_k_x = preprocess_data(k_x, comb[1], int(comb[0]), name_db)
+
+    for i, case in enumerate(cases):
+        av_results[i]['reduct'] = case
+        for act_fold in processed_k_x:
+            # get data from actual fold
+            x_validate = act_fold['X_val']
+            y_validate = act_fold['y_val']
+            # apply or not the reduction
+            x_train, y_train = get_reduct(case, act_fold['X_train'], act_fold['y_train'], knn)
+            # calculate the average of the storage
+            av_results[i]['av_storage'].append(100*len(x_train)/len(act_fold['X_train']))
+            t0 = time.time()
+            knn.fit(x_train, y_train)
+            predict = knn.predict(x_validate)
+            t1 = time.time() - t0
+
+            # evaluate the knn
+            supervised = evaluate_accuracy(y_validate, predict)
+
+            # sum the new metrics obtained to make average
+            av_results[i]['accuracy'].append(supervised['accuracy'])
+            av_results[i]['time'].append(t1)
+
+        av_results[i]['accuracy'] = np.array(av_results[i]['accuracy'])
+        av_results[i]['time'] = np.array(av_results[i]['time'])
+        av_results[i]['av_accuracy'] = np.average(av_results[i]['accuracy'])
+        av_results[i]['av_time'] = np.average(av_results[i]['time'])
+
+    print(av_results)
+
+
+def get_reduct(policy: str, x: np.ndarray, y: np.array, knn: kNNAlgorithm):
+    """
+    Apply the reduction to data passed by parameter.
+    :param policy: algorithm chosen to make the reduction.
+    :param x: data ndarray with all the samples of the training part of the fold.
+    :param y: labels for each sample described in x.
+    :param knn: Knn algorithm that is set with parameters previously.
+    """
+    if policy == 'full':
+        return x, y
+    elif policy == 'enn':
+        return enn_reduction(knn, x, y)
+    elif policy == 'menn':
+        return menn_reduction(knn, x, y)
+    elif policy == 'fcnn':
+        return fcnn_reduction(knn, x, y)
+    elif policy == 'drop3':
+        return drop3_reduction(knn, x, y)
+    else:
+        raise ValueError('The reduction algorithm chosen is supported')
 
 
 def set_output(results, database_name):
@@ -110,15 +167,21 @@ def set_output(results, database_name):
     print("\nThe CSV output files are created in results folder of this project\n")
 
 
-def read_csv(name_file):
+def read_csv(name_file, metrics=True):
     """
     Read the csv file and extract the metrics for each combination.
     :param name_file: the name of the file on where you want to read the metrics.
+    :param metrics: boolean that change the mode read metrics file or read bests file
     """
     results = pd.read_csv("./results/" + name_file + ".csv", sep='\t', encoding='utf-8')
-    res = np.array(results.to_dict(orient='records'))
-    for act in res:
-        act['time'] = list(np.fromstring(act['time'][1:-1], dtype=np.float, sep=' '))
-        act['accuracy'] = list(np.fromstring(act['accuracy'][1:-1], dtype=np.float, sep=' '))
-        act['metrics'] = act['metrics'].strip("][").split(' ')
+
+    if metrics:
+        res = np.array(results.to_dict(orient='records'))
+        for act in res:
+            act['time'] = list(np.fromstring(act['time'][1:-1], dtype=np.float, sep=' '))
+            act['accuracy'] = list(np.fromstring(act['accuracy'][1:-1], dtype=np.float, sep=' '))
+            act['metrics'] = act['metrics'].strip("][").split(' ')
+    else:
+        res = results
+
     return res
