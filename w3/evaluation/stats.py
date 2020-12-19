@@ -48,7 +48,7 @@ def stats_mat(results, metric):
     param results: structure with all accuracy and time obtained for each run (10) of each configuration model
     return one matrix containing all results of compute_stat_ind for each configuration model
     """
-    stats = np.full(shape=(len(results), len(results), 2), fill_value=np.nan)
+    stats = np.full(shape=(len(list(results['model'].unique())), len(list(results['model'].unique())), 2), fill_value=np.nan)
 
     # considering results as a dataframe with columns= ['model', 'accuracy', 'time']
 
@@ -115,7 +115,7 @@ def get_best_ind(results, reduced=False):
 def get_best_results(results, reduced=False):
     """
     Get the results of accuracy, time and storage (if reduced = True) of the statistical bests configurations
-    param results: array of dictionaries with all accuracy and time obtained for each run (10) of each configuration model
+    param results: array of dictionaries from a csv file with all accuracy and time obtained for each run (10) of each configuration model
     param reduced: if the data was reduced and the results has a column 'storage' it should be set to True
     return a dataframe containing the average accuracy and time of the statistical best configurations sorted by the KPI = accuracy/time
     """
@@ -124,21 +124,22 @@ def get_best_results(results, reduced=False):
     time = []
     model_list = []
     for i, model1 in enumerate(results):
-        res1_acc = list(model1['accuracy'])
-        res1_time = list(model1['time'])
-        res1_k = model1['metrics'][0]
-        res1_w = model1['metrics'][1]
-        res1_v = model1['metrics'][2]
-        res1_d = model1['metrics'][3]
-        model = [str(res1_k) + '-' + str(res1_w) + '-' + str(res1_v) + '-' + str(res1_d)] * 10
+        res1_acc = model1['accuracy']
+        res1_acc=list(np.fromstring(res1_acc[1:-1], dtype=np.float, sep=' '))
+        res1_time = model1['time']
+        res1_time=list(np.fromstring(res1_time[1:-1], dtype=np.float, sep=' '))
+        metrics=model1['metrics']
+        metrics=metrics.strip("']['").split(' ')
+        res1_k = metrics[0]
+        res1_w = metrics[1]
+        res1_v = metrics[2]
+        res1_d = metrics[3]
+        model = [str(res1_k) + "-" + str(res1_w) + '-' + str(res1_v) + '-' + str(res1_d)] * 10
         accuracy = accuracy + res1_acc
         time = time + res1_time
         model_list = model_list + model
 
     df_results = pd.DataFrame()
-    print(model_list)
-    print(accuracy)
-    print(time)
     df_results['model'] = model_list
     df_results['accuracy'] = accuracy
     df_results['time'] = time
@@ -148,7 +149,7 @@ def get_best_results(results, reduced=False):
     best_results['accuracy/time'] = best_results['accuracy'] / best_results['time']
     best_results = best_results.sort_values(['accuracy/time'], ascending=False)
 
-    print(best_results)
+    #print(best_results)
 
     # theoretically, the best configuration is the first row
 
