@@ -86,8 +86,11 @@ def get_best_ind(results, reduced=False):
         best_mat_storage = eval_stat_test(stats_storage)
 
     N = best_mat_acc.shape[0]
-    threshold = N / 2 + 1.96 * (N ** 0.5) / 2  # use of z-test: if the number of wins is at least N/2 + 1.96(N^0.5)/2,
+    if N>30:
+        threshold = N / 2 + 1.96 * (N ** 0.5) / 2  # use of z-test: if the number of wins is at least N/2 + 1.96(N^0.5)/2,
                                             # the algorithm is significantly better with p < 0.05
+    else:
+        threshold = N / 2
 
     best_accuracy_idx = str(np.argwhere(np.sum(best_mat_acc < 2, axis=1) >= threshold).flatten())
     best_accuracy_idx = best_accuracy_idx.replace('[', '')
