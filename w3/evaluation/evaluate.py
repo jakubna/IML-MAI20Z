@@ -25,3 +25,14 @@ def evaluate_supervised_external(labels_true, labels_predicted):
     return supervised_scores
 
 
+def evaluate_accuracy(labels_true, labels_predicted):
+    """
+    this functions is to compare the predicted results with the real ones (supervised methods) in some different metrics
+    :param labels_true: 1D data array of size (true labels).
+    :param labels_predicted: 1D data array of size (predicted labels).
+    """
+    supervised_scores = dict(
+        accuracy=accuracy_score(labels_true, labels_predicted))
+    return supervised_scores
+
+
