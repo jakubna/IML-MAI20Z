@@ -1,5 +1,6 @@
 from evaluation.plot import *
 from evaluation.evaluate import *
+from evaluation.stats import get_best_results
 import pandas as pd
 from algorithms.kNNAlgorithm import kNNAlgorithm
 from dataPreprocessing.read_data import preprocess_data
@@ -69,8 +70,9 @@ def best_knn_get_best_comb(name_file):
     :param name_file: the name of the file on where you want to read the metrics.
     """
     metrics = read_csv(name_file)
-    print(type(metrics))
-    print(metrics)
+    best = get_best_results(metrics)
+    print(type(best))
+    print(best)
 
 
 def apply_evaluation(x, label_true, labels, names, database_name):
@@ -114,4 +116,9 @@ def read_csv(name_file):
     :param name_file: the name of the file on where you want to read the metrics.
     """
     results = pd.read_csv("./results/" + name_file + ".csv", sep='\t', encoding='utf-8')
-    return np.array(results.to_dict(orient='records'))
+    res = np.array(results.to_dict(orient='records'))
+    for act in res:
+        act['time'] = list(np.fromstring(act['time'][1:-1], dtype=np.float, sep=' '))
+        act['accuracy'] = list(np.fromstring(act['accuracy'][1:-1], dtype=np.float, sep=' '))
+        act['metrics'] = act['metrics'].strip("][").split(' ')
+    return res
