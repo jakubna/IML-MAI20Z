@@ -148,6 +148,8 @@ def get_best_results(results, reduced=False):
     best_results = df_results.groupby(['model']).mean().reset_index().iloc[best_models, :]
     best_results['accuracy/time'] = best_results['accuracy'] / best_results['time']
     best_results = best_results.sort_values(['accuracy/time'], ascending=False)
+    best_results=best_results.reset_index()
+    best_results=best_results.drop(['index'],axis=1)
 
     #print(best_results)
 
