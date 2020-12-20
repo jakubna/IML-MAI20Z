@@ -7,17 +7,15 @@ from algorithms.reduction.menn import menn_reduction
 from evaluation.stats import get_best_results
 import pandas as pd
 from algorithms.kNNAlgorithm import kNNAlgorithm
-from dataPreprocessing.read_data import preprocess_data
 import itertools
 import time
 
 
-def best_knn_metrics(k_x: np.ndarray, name_file, name_db):
+def best_knn_metrics(k_x: np.ndarray, name_file):
     """
     Apply the implemented knn for each possible parameter combination, extract the metrics and store to a csv file.
-    :param k_x: data array of size (n_folds), each element is a dictionary with validation_data, train_data, meta_data.
+    :param k_x: data array of size (n_folds).
     :param name_file: the name of the file on where you want to write.
-    :param name_db: string with the name of our dataset.
     """
     params = [[1, 3, 5, 7], ['equal', 'mutual_info', 'relief'], ['majority_class', 'inverse_distance', 'sheppard_work'],
               ['minkowski', 'euclidean', 'chebyshev']]  # , 'chebyshev' 'canberra'
@@ -33,12 +31,9 @@ def best_knn_metrics(k_x: np.ndarray, name_file, name_db):
         print(act)
 
         av_results = dict(metrics=act, av_accuracy=0, av_time=0, accuracy=[], time=[])
-        knn = kNNAlgorithm(n_neighbors=int(act[0]), policy=act[2], metric=act[3])
+        knn = kNNAlgorithm(n_neighbors=int(act[0]), policy=act[2], weights=act[1], metric=act[3])
 
-        # preprocess de data folds
-        processed_k_x = preprocess_data(k_x, act[1], int(act[0]), name_db)
-
-        for act_fold in processed_k_x:
+        for act_fold in k_x:
             # get data from actual fold
             x_train = act_fold['X_train']
             y_train = act_fold['y_train']
@@ -83,32 +78,27 @@ def best_knn_get_best_comb(name_file_input, name_file_output):
     set_output(bests, name_file_output)
 
 
-def reduct_best_knn(name_file_input, k_x, name_db):
+def reduct_best_knn(name_file_input, k_x):
     """
     Apply the reduction and make the analysis of the metrics extracted.
     :param name_file_input: the name of the file on where you want to read the metrics.
     :param k_x: data array of size (n_folds), each element is a dictionary with validation_data, train_data, meta_data.
-    :param name_db: string with the name of our dataset.
     """
-    cases = [ 'full', 'enn', 'menn','fcnn','drop3']
+    cases = ['full', 'enn', 'menn', 'fcnn', 'drop3']
     # read the best combinations
     best_list = read_csv(name_file_input, metrics=False)
 
     best = best_list.loc[[0]].to_dict(orient='records')[0]
     comb = best['model'].split('-')
 
+    full_results = []
 
-    full_results=[]
-
-    knn = kNNAlgorithm(n_neighbors=int(comb[0]), policy=comb[2], metric=comb[3])
-    # preprocess de data folds
-    processed_k_x = preprocess_data(k_x, comb[1], int(comb[0]), name_db)
+    knn = kNNAlgorithm(n_neighbors=int(comb[0]), weights=comb[1], policy=comb[2], metric=comb[3])
 
     for i, case in enumerate(cases):
-        comb2=comb+[case]
-        av_results = dict(metrics=comb2, av_accuracy=0, av_time=0, accuracy=[], time=[], storage=[],
-                          av_storage=0)
-        for act_fold in processed_k_x:
+        comb2 = comb+[case]
+        av_results = dict(metrics=comb2, av_accuracy=0, av_time=0, accuracy=[], time=[], storage=[], av_storage=0)
+        for act_fold in k_x:
             # get data from actual fold
             x_validate = act_fold['X_val']
             y_validate = act_fold['y_val']
