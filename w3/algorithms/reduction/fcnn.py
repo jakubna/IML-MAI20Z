@@ -12,8 +12,10 @@ def fcnn_reduction(knn: kNNAlgorithm, X: np.ndarray, y: np.ndarray):
         i_labels=i_labels.tolist()
         centroid = np.mean(np.array(X[i_labels, :]), axis=0)
         ind = knn.kneighbors(np.array([centroid]))
-        if y[ind[0][0]] == label:
-            i = ind[0][0]
+        for item in ind[0]:
+            if y[item] == label:
+                i = item
+                break
         # Add to new sets
         S.append(X[i, :])
         V.append(y[i])
