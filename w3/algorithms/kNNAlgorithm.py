@@ -1,11 +1,13 @@
 import numpy as np
 from scipy.spatial import distance
 from collections import Counter
+from sklearn.feature_selection import mutual_info_classif
+from ReliefF import ReliefF
 
 
 class kNNAlgorithm:
 
-    def __init__(self, n_neighbors: int = 5, policy='majority_class', metric='minkowski'):
+    def __init__(self, n_neighbors: int = 5, policy='majority_class', weights='equal', metric='minkowski'):
         """
         :param n_neighbors: Number of neighbors to use by default for kneighbors queries.
         :param policy: policy dor the algorithm used in prediction. Possible values: 'majority_class',
@@ -18,6 +20,8 @@ class kNNAlgorithm:
             raise ValueError('Param policy can be: uniform or distance')
         if metric not in ['minkowski', 'euclidean', 'chebyshev', 'canberra']:
             raise ValueError('Param metric can be: minkowski or euclidean or chebyshev or canberra')
+        if weights not in ['mutual_info', 'relief', 'equal']:
+            raise ValueError('Param weights can be: equal, relief, mutual_info or correlation')
 
         self.n_neighbors = n_neighbors
         self.policy = policy
@@ -31,14 +35,19 @@ class kNNAlgorithm:
         self.y_train = None
         self.y_test = None
 
+        self.weights = weights
+        self.weight_vec = None
+
     def fit(self, x: np.ndarray, y):
         """
         Fit the model using X as training data and y as target values
         :param x: 2D data array of size (rows, features).
         :param y: true labels
         """
+        self.weights_values(x, y, self.n_neighbors, self.weights)
+
         self.y_train = y
-        self.X_train = x
+        self.X_train = x * self.weight_vec
 
     def kneighbors(self, x: np.ndarray, return_distance=False):
         """
@@ -46,7 +55,7 @@ class kNNAlgorithm:
         :param x: 2D data array of size (rows, features).
         :param return_distance: If False, distances will not be returned.
         """
-        self.X_test = x
+        self.X_test = x * self.weight_vec
         neigh_dist = []
         neigh_ind = []
 
@@ -149,3 +158,25 @@ class kNNAlgorithm:
         :return: the canberra distance between vector one and two
         """
         return np.sum(np.nan_to_num(np.fabs(p_vec - q_vec) / (np.fabs(p_vec) + np.fabs(q_vec))))
+
+    def weights_values(self, x: np.ndarray, y: np.array, n_neigh, weights):
+        """
+        Create the weights vector for the problem
+        :param x: 2D data array of size (rows, features).
+        :param y: data array of size (rows).
+        :param n_neigh: number of neighbors for knn
+        :param weights: policy of weights that we want to apply
+        Returns: weights vector in numpy format
+        """
+        if weights == 'equal':
+            self.weight_vec = np.ones(x.shape[1])
+        elif weights == 'relief':
+            fs = ReliefF(n_neighbors=n_neigh, n_features_to_keep=x.shape[1])
+            fs.fit(x, np.array(y))
+            rel = np.array(fs.feature_scores)
+            self.weight_vec = rel / np.linalg.norm(rel)
+        elif weights == 'mutual_info':
+            w = np.array(mutual_info_classif(x, y, n_neighbors=n_neigh))
+            self.weight_vec = w / np.linalg.norm(w)
+        else:
+            raise ValueError('Param weights can be: equal, relief, mutual_info')
