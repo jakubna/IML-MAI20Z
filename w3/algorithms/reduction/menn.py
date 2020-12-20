@@ -12,7 +12,7 @@ def menn_reduction(knn: kNNAlgorithm, X: np.ndarray, y: np.ndarray):
         kn=kn[0]
         for j in range(X.shape[0]):
             if j != i:
-                one_dist = knn._calculate_distance(np.array([X[i, :]]), np.array([X[i, :]]))
+                one_dist = knn._calculate_distance(np.array([X[i, :]]), np.array([X[j, :]]))
                 if one_dist[0][0] <= max_distance:
                     kn.append(j)
         predxi = knn.predict(np.array([X[i, :]]))
