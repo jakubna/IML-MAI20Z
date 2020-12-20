@@ -138,6 +138,8 @@ def reduct_best_knn(name_file_input, k_x, name_db):
         full_results.append(av_results)
 
     print(full_results)
+    df_results = pd.DataFrame(full_results)
+    set_output(df_results, 'reduction_'+name_file_input)
 
 
 def get_reduct(policy: str, x: np.ndarray, y: np.array, knn: kNNAlgorithm):
