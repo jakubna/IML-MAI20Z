@@ -90,31 +90,31 @@ def reduct_best_knn(name_file_input, k_x, name_db):
     :param k_x: data array of size (n_folds), each element is a dictionary with validation_data, train_data, meta_data.
     :param name_db: string with the name of our dataset.
     """
-    cases = ['full', 'enn', 'menn', 'fcnn', 'drop3']
+    cases = [ 'full', 'enn', 'menn','fcnn','drop3']
     # read the best combinations
     best_list = read_csv(name_file_input, metrics=False)
 
     best = best_list.loc[[0]].to_dict(orient='records')[0]
     comb = best['model'].split('-')
 
-    m = dict(metrics=comb, reduct='', av_accuracy=0, av_time=0, accuracy=[], time=[], storage=0, av_storage=[])
-    av_results = np.full(len(cases), m)
+
+    full_results=[]
 
     knn = kNNAlgorithm(n_neighbors=int(comb[0]), policy=comb[2], metric=comb[3])
-
     # preprocess de data folds
     processed_k_x = preprocess_data(k_x, comb[1], int(comb[0]), name_db)
 
     for i, case in enumerate(cases):
-        av_results[i]['reduct'] = case
+        comb2=comb+[case]
+        av_results = dict(metrics=comb2, av_accuracy=0, av_time=0, accuracy=[], time=[], storage=[],
+                          av_storage=0)
         for act_fold in processed_k_x:
             # get data from actual fold
             x_validate = act_fold['X_val']
             y_validate = act_fold['y_val']
             # apply or not the reduction
             x_train, y_train = get_reduct(case, act_fold['X_train'], act_fold['y_train'], knn)
-            # calculate the average of the storage
-            av_results[i]['av_storage'].append(100*len(x_train)/len(act_fold['X_train']))
+
             t0 = time.time()
             knn.fit(x_train, y_train)
             predict = knn.predict(x_validate)
@@ -124,17 +124,20 @@ def reduct_best_knn(name_file_input, k_x, name_db):
             supervised = evaluate_accuracy(y_validate, predict)
 
             # sum the new metrics obtained to make average
-            av_results[i]['accuracy'].append(supervised['accuracy'])
-            av_results[i]['time'].append(t1)
+            av_results['accuracy'].append(supervised['accuracy'])
+            av_results['time'].append(t1)
+            # calculate the average of the storage
+            av_results['storage'].append(100*len(x_train)/len(act_fold['X_train']))
 
-        av_results[i]['accuracy'] = np.array(av_results[i]['accuracy'])
-        av_results[i]['time'] = np.array(av_results[i]['time'])
-        av_results[i]['av_accuracy'] = np.average(av_results[i]['accuracy'])
-        av_results[i]['av_time'] = np.average(av_results[i]['time'])
-        av_results[i]['storage'] = np.array(av_results[i]['storage'])
-        av_results[i]['av_storage'] = np.average(av_results[i]['storage'])
+        av_results['accuracy'] = np.array(av_results['accuracy'])
+        av_results['time'] = np.array(av_results['time'])
+        av_results['av_accuracy'] = np.average(av_results['accuracy'])
+        av_results['av_time'] = np.average(av_results['time'])
+        av_results['storage'] = np.array(av_results['storage'])
+        av_results['av_storage'] = np.average(av_results['storage'])
+        full_results.append(av_results)
 
-    print(av_results)
+    print(full_results)
 
 
 def get_reduct(policy: str, x: np.ndarray, y: np.array, knn: kNNAlgorithm):
