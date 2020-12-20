@@ -7,12 +7,12 @@ from copy import deepcopy
 
 
 def drop3_reduction(knn: kNNAlgorithm, X: np.ndarray, y: np.ndarray):
-    S = list(range(X.shape[0]))
-
+    knn.fit(X, y)
     remove_intances = []
-    for i in S:
-        dist, kn = knn.kneighbors(X[i, :])
-        kn = list(kn)
+    for i in range(X.shape[0]):
+        dist, kn = knn.kneighbors([X[i, :]], return_distance=True)
+        kn = kn.tolist()
+        kn = kn[0]
         y_kn = [y[j] for j in kn]
         if len(set(y_kn)) > 1:
             remove_intances.append(i)
@@ -28,13 +28,16 @@ def drop3_reduction(knn: kNNAlgorithm, X: np.ndarray, y: np.ndarray):
     S = list(range(X.shape[0]))
     associates: List[Set[int]] = [set() for _ in range(X.shape[0])]
     # neighbours = [[] for _ in range(S.shape[0])]
-
-    # knn_1 = kNNAlgorithm(K=knn.n_neighbors + 1, policy=knn.policy, weights=knn.weights, metric=knn.metric)
-    knn.fit(X, y)
+    if knn.metric== 'cityblock':
+        metric_= 'minkowski'
+    else:
+        metric_=knn.metric
+    knn_1 = kNNAlgorithm(n_neighbors=knn.n_neighbors + 1, policy=knn.policy,  metric=metric_)
+    knn_1.fit(X, y)
 
     for p_idx in range(X.shape[0]):
         # Find the k + 1 nearest neighbors of p in S.
-        associates[p_idx] = set(knn.kneighbors(X[p_idx, :]))
+        associates[p_idx] = set(knn_1.kneighbors([X[p_idx, :]])[0])
         logging.debug(f'Instance {p_idx} neighbours -> {associates[p_idx]}')
 
         # Add p to each of its neighbors’ lists of associates.
@@ -44,22 +47,28 @@ def drop3_reduction(knn: kNNAlgorithm, X: np.ndarray, y: np.ndarray):
 
     # Order X from the element that has the furthest to the nearest nearest enemy
     # (nearest neighbor that is of a different class), to do that:
+
     min_dist = []
-    intances = []
+    instances = []
+    classes=[]
     for p in range(X.shape[0]):
         enemies = []
         yp = y[p]
         for i in range(X.shape[0]):
             if y[i] != yp:
                 enemies.append(i)
-        distances = knn._calculate_distance(X[p, :], X[enemies, :])
-        min_dist.append(min(distances))
-        intances.append(X[p, :])
+        distances = knn._calculate_distance([X[p, :]], X[enemies, :])
+        min_dist.append(min(distances[0]))
+        instances.append(X[p, :])
+        classes.append(y[p])
     df = pd.DataFrame()
-    df['x'] = intances
+    df['x'] = instances
     df['dist'] = min_dist
+    df['y']=classes
     df = df.sort_values(['dist'], ascending=False)
     X = np.array(list(df['x']))
+    y=np.array(list(df['y']))
+
 
     p_idx = 0
     p_idx_original = 0
