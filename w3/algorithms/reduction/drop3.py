@@ -10,7 +10,7 @@ def drop3_reduction(knn: kNNAlgorithm, X: np.ndarray, y: np.ndarray):
     knn.fit(X, y)
     remove_intances = []
     for i in range(X.shape[0]):
-        dist, kn = knn.kneighbors([X[i, :]], return_distance=True)
+        dist, kn = knn.kneighbors(np.array([X[i, :]]), return_distance=True)
         kn = kn.tolist()
         kn = kn[0]
         y_kn = [y[j] for j in kn]
@@ -37,7 +37,7 @@ def drop3_reduction(knn: kNNAlgorithm, X: np.ndarray, y: np.ndarray):
 
     for p_idx in range(X.shape[0]):
         # Find the k + 1 nearest neighbors of p in S.
-        associates[p_idx] = set(knn_1.kneighbors([X[p_idx, :]])[0])
+        associates[p_idx] = set(knn_1.kneighbors(np.array([X[p_idx, :]]))[0])
         logging.debug(f'Instance {p_idx} neighbours -> {associates[p_idx]}')
 
         # Add p to each of its neighbors’ lists of associates.
@@ -57,7 +57,7 @@ def drop3_reduction(knn: kNNAlgorithm, X: np.ndarray, y: np.ndarray):
         for i in range(X.shape[0]):
             if y[i] != yp:
                 enemies.append(i)
-        distances = knn._calculate_distance([X[p, :]], X[enemies, :])
+        distances = knn._calculate_distance(np.array([X[p, :]]), X[enemies, :])
         min_dist.append(min(distances[0]))
         instances.append(X[p, :])
         classes.append(y[p])
@@ -76,7 +76,7 @@ def drop3_reduction(knn: kNNAlgorithm, X: np.ndarray, y: np.ndarray):
         # Num. of associates of p classified correctly with p as a neighbour.
         knn.fit(X[S], y[S])
         try:
-            d_with = sum(map(lambda x: y[x] == knn.kneighbors(X[x]), associates[p_idx]))
+            d_with = sum(map(lambda x: y[x] == knn.predict(np.array([X[x]]))[0], associates[p_idx]))
         except:
             p_idx += 1
             continue
@@ -86,7 +86,7 @@ def drop3_reduction(knn: kNNAlgorithm, X: np.ndarray, y: np.ndarray):
         del S_[p_idx]
         knn.fit(X[S_], y[S_])
         try:
-            d_without = sum(map(lambda x: y[x] == knn.kneighbors(X[x]), associates[p_idx]))
+            d_without = sum(map(lambda x: y[x] == knn.predict(np.array([X[x]]))[0], associates[p_idx]))
         except:
             p_idx += 1
             continue
@@ -100,10 +100,11 @@ def drop3_reduction(knn: kNNAlgorithm, X: np.ndarray, y: np.ndarray):
                 associates[a_idx] -= {p_idx_original}
 
                 # Find a new nearest neighbor for A.
-                a_nn = knn.kneighbors(X[a_idx, :])
+                a_nn = knn.kneighbors(np.array([X[a_idx, :]]))
+
 
                 # Add A to its new neighbor’s list of associates
-                associates[a_nn[0]].add(a_idx)
+                associates[a_nn[0][0]].add(a_idx)
 
         else:
             p_idx += 1
