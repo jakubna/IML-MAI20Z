@@ -11,7 +11,7 @@ def fcnn_reduction(knn: kNNAlgorithm, X: np.ndarray, y: np.ndarray):
         i_labels = np.argwhere(np.array(y) == label).reshape(-1)
         i_labels=i_labels.tolist()
         centroid = np.mean(np.array(X[i_labels, :]), axis=0)
-        ind = knn.kneighbors([centroid])
+        ind = knn.kneighbors(np.array([centroid]))
         if y[ind[0][0]] == label:
             i = ind[0][0]
         # Add to new sets
@@ -30,10 +30,10 @@ def fcnn_reduction(knn: kNNAlgorithm, X: np.ndarray, y: np.ndarray):
         indices_to_remove = []
         for i in range(S.shape[0]):
             # calculate distances between p = S[i,:] and others instances of S
-            distances_s = knn._calculate_distance(S, [S[i, :]])
+            distances_s = knn._calculate_distance(S, np.array([S[i, :]]))
             distances_s = distances_s[distances_s != 0]
             min_dist = distances_s.min()
-            distances_x = knn._calculate_distance(X, [S[i, :]])
+            distances_x = knn._calculate_distance(X, np.array([S[i, :]]))
             for dist_id, dist in enumerate(distances_x):
                 if dist < min_dist:
                     if y[dist_id] != V[i]:
@@ -50,5 +50,5 @@ def fcnn_reduction(knn: kNNAlgorithm, X: np.ndarray, y: np.ndarray):
             y = np.delete(y, indices_to_remove)
         else:
             break
-   
+
     return S, V
