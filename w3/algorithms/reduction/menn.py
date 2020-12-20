@@ -7,7 +7,7 @@ def menn_reduction(knn: kNNAlgorithm, X: np.ndarray, y: np.ndarray):
     remove_intances = []
     for i in range(X.shape[0]):
         dist, kn = knn.kneighbors(np.array([X[i, :]]),return_distance=True)
-        max_distance = np.max(dist)
+        max_distance = max(dist[0])
         kn = kn.tolist()
         kn=kn[0]
         for j in range(X.shape[0]):
