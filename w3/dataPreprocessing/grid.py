@@ -2,11 +2,9 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler, OneHotEncoder
 from dataPreprocessing.utils import label_encoding as label_encoding
-from sklearn.feature_selection import mutual_info_classif
-from ReliefF import ReliefF
 
 
-def preprocess(dataset_train, dataset_val, meta, weights, n_neigh):
+def preprocess(dataset_train, dataset_val, meta):
     """
     Apply the personalized operations to preprocess the database.
     :return: dict:
@@ -14,8 +12,6 @@ def preprocess(dataset_train, dataset_val, meta, weights, n_neigh):
             label_true: array of true label values,
             data_frame: raw data set with filled missing values in.
     """
-    if weights not in ['mutual_info', 'relief', 'equal']:
-        raise ValueError('Param weights can be: equal, relief, mutual_info or correlation')
 
     column_names = meta.names()  # list containing column names
 
@@ -40,31 +36,7 @@ def preprocess(dataset_train, dataset_val, meta, weights, n_neigh):
     X_norm_train = norm.transform(X_train)
     X_norm_val = norm.transform(X_val)
 
-    wei = weights_values(X_norm_train, y_train, n_neigh, weights)
-
-    X_preprocessed_train = X_norm_train * wei
-    X_preprocessed_val = X_norm_val * wei
+    X_preprocessed_train = X_norm_train
+    X_preprocessed_val = X_norm_val
 
     return (X_preprocessed_train, y_train), (X_preprocessed_val, y_val)
-
-
-def weights_values(x: np.ndarray, y: np.array, n_neigh, weights):
-    """
-    Create the weights vector for the problem
-    :param x: 2D data array of size (rows, features).
-    :param y: data array of size (rows).
-    :param n_neigh: number of neighbors for knn
-    :param weights: policy of weights that we want to apply
-    Returns: weights vector in numpy format
-    """
-    if weights == 'equal':
-        return np.ones(x.shape[1])
-    if weights == 'relief':
-        fs = ReliefF(n_neighbors=n_neigh, n_features_to_keep=x.shape[1])
-        fs.fit(x, np.array(y))
-        rel = fs.feature_scores
-        return rel / np.linalg.norm(rel)
-    if weights == 'mutual_info':
-        w = np.array(mutual_info_classif(x, y, n_neighbors=n_neigh))
-        return w / np.linalg.norm(w)
-    raise ValueError('Param weights can be: equal, relief, mutual_info')
