@@ -50,9 +50,7 @@ def stats_mat(results, metric):
     return one matrix containing all results of compute_stat_ind for each configuration model
     """
     stats = np.full(shape=(len(list(results['model'].unique())), len(list(results['model'].unique())), 2), fill_value=np.nan)
-
     # considering results as a dataframe with columns= ['model', 'accuracy', 'time']
-
     for i, model1 in enumerate(list(results['model'].unique())):
         for j, model2 in enumerate(list(results['model'].unique())):
             if model1 == model2:
@@ -62,6 +60,7 @@ def stats_mat(results, metric):
             res2 = list(results[results['model'] == model2][metric])
 
             stat = compute_stat_test(res1, res2)
+
 
             stats[i, j] = np.array([stat['stat'], stat['p']])
 
@@ -92,6 +91,7 @@ def get_best_ind(results, reduced=False):
     else:
         threshold = N / 2
 
+
     best_accuracy_idx = str(np.argwhere(np.sum(best_mat_acc < 2, axis=1) >= threshold).flatten())
     best_accuracy_idx = best_accuracy_idx.replace('[', '')
     best_accuracy_idx = best_accuracy_idx.replace(']', '')
@@ -102,15 +102,15 @@ def get_best_ind(results, reduced=False):
     best_time_idx = best_time_idx.replace(']', '')
     best_time_idx = best_time_idx.split()
 
-    intersection_ = list(set(best_accuracy_idx).intersection(set(best_time_idx)))
-    intersection_ = (sorted(list(np.int_(intersection_))))
+    intersection__ = list(set(best_accuracy_idx).intersection(set(best_time_idx)))
+    intersection_ = (sorted(list(np.int_(intersection__))))
 
     if reduced:
         best_storage_idx = str(np.argwhere(np.sum(best_mat_storage < 2, axis=1) >= threshold).flatten())
         best_storage_idx = best_storage_idx.replace('[', '')
         best_storage_idx = best_storage_idx.replace(']', '')
         best_storage_idx = best_storage_idx.split()
-        intersection_ = list(set(intersection_).intersection(set(best_storage_idx)))
+        intersection_ = list(set(intersection__).intersection(set(best_storage_idx)))
         intersection_ = (sorted(list(np.int_(intersection_))))
 
     return intersection_
@@ -127,27 +127,36 @@ def get_best_results(results, reduced=False):
     accuracy = []
     time = []
     model_list = []
+    storage=[]
     for i, model1 in enumerate(results):
         metrics = model1['metrics']
-        model = [metrics[0][1:-1] + "-" + metrics[1][1:-1] + '-' + metrics[2][1:-1] + '-' + metrics[3][1:-1]] * 10
+        if len(metrics)==4:
+            model = [metrics[0][1:-1] + "-" + metrics[1][1:-1] + '-' + metrics[2][1:-1] + '-' + metrics[3][1:-1]] * 10
+        elif len(metrics)==5:
+            model = [metrics[0][1:-1] + "-" + metrics[1][1:-1] + '-' + metrics[2][1:-1] + '-' + metrics[3][1:-1]+ '-' + metrics[4][1:-1]] * 10
 
         accuracy += model1['accuracy']
         time += model1['time']
+        if reduced==True:
+            storage += model1['storage']
+
         model_list += model
 
     df_results = pd.DataFrame()
     df_results['model'] = model_list
     df_results['accuracy'] = accuracy
     df_results['time'] = time
+    if reduced==True:
+        df_results['storage']=storage
 
     best_models = get_best_ind(df_results, reduced)
-    best_results = df_results.groupby(['model']).mean().reset_index().iloc[best_models, :]
+    best_results = df_results.groupby(['model'],sort=False).mean().reset_index().iloc[best_models, :]
     best_results['accuracy/time'] = best_results['accuracy'] / best_results['time']
     best_results = best_results.sort_values(['accuracy/time'], ascending=False)
     best_results = best_results.reset_index()
     best_results = best_results.drop(['index'], axis=1)
 
-    # print(best_results)
+    print(best_results)
 
     # theoretically, the best configuration is the first row
 
