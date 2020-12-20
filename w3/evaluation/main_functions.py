@@ -62,27 +62,29 @@ def best_knn_metrics(k_x: np.ndarray, name_file):
     set_output(df_results, name_file)
 
 
-def best_knn_get_best_comb(name_file_input, name_file_output):
+def best_knn_statistical_comp(name_file_input, name_file_output, redacted):
     """
     Apply the evaluation of the metrics extracted for each combination of parameters.
     :param name_file_input: the name of the file on where you want to read the metrics.
     :param name_file_output: the name of the file on where you want to write the best combinations obtained.
+    :param redacted: if the statistical comparison is made between redacted data.
     """
     # read the combination metrics
     metrics = read_csv(name_file_input)
 
     # get the bests combinations
-    bests = get_best_results(metrics)
+    bests = get_best_results(metrics, redacted)
 
     # store the best combinations
     set_output(bests, name_file_output)
 
 
-def reduct_best_knn(name_file_input, k_x):
+def redact_best_knn(name_file_input, name_file_output, k_x):
     """
     Apply the reduction and make the analysis of the metrics extracted.
     :param name_file_input: the name of the file on where you want to read the metrics.
     :param k_x: data array of size (n_folds), each element is a dictionary with validation_data, train_data, meta_data.
+    :param name_file_output: name for the file where we are going to store the results
     """
     cases = ['full', 'enn', 'menn', 'fcnn', 'drop3']
     # read the best combinations
@@ -129,7 +131,7 @@ def reduct_best_knn(name_file_input, k_x):
 
     print(full_results)
     df_results = pd.DataFrame(full_results)
-    set_output(df_results, 'reduction_'+name_file_input)
+    set_output(df_results, name_file_output)
 
 
 def get_reduct(policy: str, x: np.ndarray, y: np.array, knn: kNNAlgorithm):
