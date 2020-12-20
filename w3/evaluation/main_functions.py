@@ -70,7 +70,7 @@ def best_knn_statistical_comp(name_file_input, name_file_output, redacted):
     :param redacted: if the statistical comparison is made between redacted data.
     """
     # read the combination metrics
-    metrics = read_csv(name_file_input)
+    metrics = read_csv(name_file_input, redacted)
 
     # get the bests combinations
     bests = get_best_results(metrics, redacted)
@@ -88,7 +88,7 @@ def redact_best_knn(name_file_input, name_file_output, k_x):
     """
     cases = ['full', 'enn', 'menn', 'fcnn', 'drop3']
     # read the best combinations
-    best_list = read_csv(name_file_input, metrics=False)
+    best_list = read_csv(name_file_input, False, metrics=False)
 
     best = best_list.loc[[0]].to_dict(orient='records')[0]
     comb = best['model'].split('-')
@@ -166,7 +166,7 @@ def set_output(results, database_name):
     print("\nThe CSV output files are created in results folder of this project\n")
 
 
-def read_csv(name_file, metrics=True):
+def read_csv(name_file, reduced=False, metrics=True):
     """
     Read the csv file and extract the metrics for each combination.
     :param name_file: the name of the file on where you want to read the metrics.
@@ -179,7 +179,12 @@ def read_csv(name_file, metrics=True):
         for act in res:
             act['time'] = list(np.fromstring(act['time'][1:-1], dtype=np.float, sep=' '))
             act['accuracy'] = list(np.fromstring(act['accuracy'][1:-1], dtype=np.float, sep=' '))
-            act['metrics'] = act['metrics'].strip("][").split(' ')
+            if reduced==False:
+                act['metrics'] = act['metrics'].strip("][").split(' ')
+            else:
+                act['storage'] = list(np.fromstring(act['storage'][1:-1], dtype=np.float, sep=' '))
+                print(act['metrics'])
+                act['metrics'] = act['metrics'].strip("][").split(', ')
     else:
         res = results
 
