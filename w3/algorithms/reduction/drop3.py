@@ -76,7 +76,7 @@ def drop3_reduction(knn: kNNAlgorithm, X: np.ndarray, y: np.ndarray):
         # Num. of associates of p classified correctly with p as a neighbour.
         knn.fit(X[S], y[S])
         try:
-            d_with = sum(map(lambda x: y[x] == knn.predict(np.array([X[x]]))[0], associates[p_idx]))
+            d_with = sum(map(lambda x: y[x] == knn.predict(np.array([X[x,:]]))[0], associates[p_idx]))
         except:
             p_idx += 1
             continue
@@ -86,7 +86,7 @@ def drop3_reduction(knn: kNNAlgorithm, X: np.ndarray, y: np.ndarray):
         del S_[p_idx]
         knn.fit(X[S_], y[S_])
         try:
-            d_without = sum(map(lambda x: y[x] == knn.predict(np.array([X[x]]))[0], associates[p_idx]))
+            d_without = sum(map(lambda x: y[x] == knn.predict(np.array([X[x,:]]))[0], associates[p_idx]))
         except:
             p_idx += 1
             continue
