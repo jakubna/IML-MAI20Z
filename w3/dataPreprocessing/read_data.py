@@ -16,6 +16,10 @@ def read_database(database: str):
 
     if name not in ['hypothyroid', 'grid']:
         raise ValueError('Database not found')
+    if name == "hypothyroid":
+        preprocess = preprocess_hypothyroid
+    elif name == "grid":
+        preprocess = preprocess_grid
 
     for i in range(10):
         fold_path = name + ".fold.00000" + str(i)
@@ -25,34 +29,11 @@ def read_database(database: str):
         data_val, meta_val = arff.loadarff(f_val)
         dataset_train = np.array(data_train.tolist(), dtype=object)
         dataset_val = np.array(data_val.tolist(), dtype=object)
+        (X_train, y_train), (X_val, y_val) = preprocess(dataset_train, dataset_val, meta_train)
         folds.append({
-            'db_train': dataset_train,
-            'db_val': dataset_val,
-            'meta': meta_train
-        })
-    return folds
-
-
-def preprocess_data(folds, weights, n_neigh, name):
-    """
-    Apply the implemented knn for each possible parameter combination, extract the metrics and store to a csv file.
-    :param folds: folds (validation_data, train_data, meta_data) that we are going to preprocess
-    :param weights: weights policy that we are going to use.
-    :param n_neigh: number of neighbours of our execution
-    :param name: string with the name of our dataset.
-    """
-    if name == "hypothyroid":
-        preprocess = preprocess_hypothyroid
-    elif name == "grid":
-        preprocess = preprocess_grid
-
-    preprocessed_folds = []
-    for act in folds:
-        (X_train, y_train), (X_val, y_val) = preprocess(act['db_train'], act['db_val'], act['meta'], weights, n_neigh)
-        preprocessed_folds.append({
             'X_train': X_train,
             'y_train': y_train,
             'X_val': X_val,
             'y_val': y_val
         })
-    return preprocessed_folds
+    return folds
