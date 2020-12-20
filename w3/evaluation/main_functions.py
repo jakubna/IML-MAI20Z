@@ -7,6 +7,7 @@ from algorithms.reduction.menn import menn_reduction
 from evaluation.stats import get_best_results
 import pandas as pd
 from algorithms.kNNAlgorithm import kNNAlgorithm
+from algorithms.reductionKNNAlgorithm import reduction_KNNAlogrithm
 import itertools
 import time
 
@@ -18,7 +19,7 @@ def best_knn_metrics(k_x: np.ndarray, name_file):
     :param name_file: the name of the file on where you want to write.
     """
     params = [[1, 3, 5, 7], ['equal', 'mutual_info', 'relief'], ['majority_class', 'inverse_distance', 'sheppard_work'],
-              ['minkowski', 'euclidean', 'chebyshev']]  # , 'chebyshev' 'canberra'
+              ['minkowski', 'euclidean', 'chebyshev']]
 
     # get all combinations that must be evaluated
     pos_sol = np.array(list(itertools.product(*params)))
@@ -95,18 +96,21 @@ def redact_best_knn(name_file_input, name_file_output, k_x):
 
     full_results = []
 
-    knn = kNNAlgorithm(n_neighbors=int(comb[0]), weights=comb[1], policy=comb[2], metric=comb[3])
+    config = dict(n_neighbors=int(comb[0]), weights=comb[1], policy=comb[2], metric=comb[3])
 
     for i, case in enumerate(cases):
         comb2 = comb+[case]
+        print(comb2)
         av_results = dict(metrics=comb2, av_accuracy=0, av_time=0, accuracy=[], time=[], storage=[], av_storage=0)
         for act_fold in k_x:
+            print(time.ctime(time.time()))
             # get data from actual fold
             x_validate = act_fold['X_val']
             y_validate = act_fold['y_val']
             # apply or not the reduction
-            x_train, y_train = get_reduct(case, act_fold['X_train'], act_fold['y_train'], knn)
-
+            knn = kNNAlgorithm(n_neighbors=int(comb[0]), weights=comb[1], policy=comb[2], metric=comb[3])
+            # x_train, y_train = get_reduct(case, act_fold['X_train'], act_fold['y_train'], knn)
+            x_train, y_train = reduction_KNNAlogrithm(config, act_fold['X_train'], act_fold['y_train'], case)
             t0 = time.time()
             knn.fit(x_train, y_train)
             predict = knn.predict(x_validate)
@@ -132,28 +136,6 @@ def redact_best_knn(name_file_input, name_file_output, k_x):
     print(full_results)
     df_results = pd.DataFrame(full_results)
     set_output(df_results, name_file_output)
-
-
-def get_reduct(policy: str, x: np.ndarray, y: np.array, knn: kNNAlgorithm):
-    """
-    Apply the reduction to data passed by parameter.
-    :param policy: algorithm chosen to make the reduction.
-    :param x: data ndarray with all the samples of the training part of the fold.
-    :param y: labels for each sample described in x.
-    :param knn: Knn algorithm that is set with parameters previously.
-    """
-    if policy == 'full':
-        return x, y
-    elif policy == 'enn':
-        return enn_reduction(knn, x, y)
-    elif policy == 'menn':
-        return menn_reduction(knn, x, y)
-    elif policy == 'fcnn':
-        return fcnn_reduction(knn, x, y)
-    elif policy == 'drop3':
-        return drop3_reduction(knn, x, y)
-    else:
-        raise ValueError('The reduction algorithm chosen is supported')
 
 
 def set_output(results, database_name):
@@ -189,3 +171,22 @@ def read_csv(name_file, reduced=False, metrics=True):
         res = results
 
     return res
+
+
+def plot(name_file_input, redacted):
+    metrics = read_csv(name_file_input, redacted, metrics=False)
+    steps = (int)(metrics.shape[0]/3)
+    green = np.array(np.full(steps, 'green'))
+    blue = np.array(np.full(steps, 'blue'))
+    red = np.array(np.full((metrics.shape[0])-steps*2, 'red'))
+    colors = np.concatenate((green, blue, red), axis=None)
+    if redacted:
+        metrics.drop("accuracy/time", axis=1, inplace=True)
+        metrics.drop("model", axis=1, inplace=True)
+        metrics.plot(x='accuracy', y='time', z='storage', kind='scatter', c=colors)
+        plt.show()
+    else:
+        metrics.drop("accuracy/time", axis=1, inplace=True)
+        metrics.drop("model", axis=1, inplace=True)
+        metrics.plot(x='accuracy', y='time', kind='scatter', c=colors)
+        plt.show()
