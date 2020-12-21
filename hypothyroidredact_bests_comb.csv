@@ -1,0 +1,2 @@
+model	accuracy	time	storage	accuracy/time
+3-mutual_info-majority_class-chebyshev-full	0.963679909	22.451733399	100.0	0.04292229432240285
