@@ -47,7 +47,6 @@ def drop3_reduction(knn: kNNAlgorithm, X: np.ndarray, y: np.ndarray):
 
     # Order X from the element that has the furthest to the nearest nearest enemy
     # (nearest neighbor that is of a different class), to do that:
-
     min_dist = []
     instances = []
     classes=[]
@@ -69,7 +68,6 @@ def drop3_reduction(knn: kNNAlgorithm, X: np.ndarray, y: np.ndarray):
     X = np.array(list(df['x']))
     y=np.array(list(df['y']))
 
-
     p_idx = 0
     p_idx_original = 0
     while p_idx < len(S):
@@ -84,6 +82,7 @@ def drop3_reduction(knn: kNNAlgorithm, X: np.ndarray, y: np.ndarray):
         # knn.fit(np.delete(S, p_idx, axis=0), np.delete(V, p_idx))
         S_ = S.copy()
         del S_[p_idx]
+
         knn.fit(X[S_], y[S_])
         try:
             d_without = sum(map(lambda x: y[x] == knn.predict(np.array([X[x,:]]))[0], associates[p_idx]))
@@ -92,6 +91,7 @@ def drop3_reduction(knn: kNNAlgorithm, X: np.ndarray, y: np.ndarray):
             continue
 
         logging.debug(f'For instance {p_idx}: with={d_with} and without={d_without}')
+
 
         if d_without >= d_with:
             S = S_
@@ -106,8 +106,8 @@ def drop3_reduction(knn: kNNAlgorithm, X: np.ndarray, y: np.ndarray):
                 # Add A to its new neighbor’s list of associates
                 associates[a_nn[0][0]].add(a_idx)
 
-        else:
-            p_idx += 1
+        #else:
+        p_idx += 1
         p_idx_original += 1
 
     return X[S], y[S]
