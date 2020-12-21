@@ -172,14 +172,19 @@ def read_csv(name_file, reduced=False, metrics=True):
     return res
 
 
-def plot(name_file_input, redacted):
-    metrics = read_csv(name_file_input, redacted, metrics=False)
+def plot(name_file_input, reduced):
+    """
+        Plot the results extracted from the input file.
+        :param name_file_input: the name of the file on where you want to read the metrics.
+        :param reduced: boolean that indicates if there are reduced format
+    """
+    metrics = read_csv(name_file_input, reduced, metrics=False)
     steps = (int)(metrics.shape[0]/3)
     green = np.array(np.full(steps, 'green'))
     blue = np.array(np.full(steps, 'blue'))
     red = np.array(np.full((metrics.shape[0])-steps*2, 'red'))
     colors = np.concatenate((green, blue, red), axis=None)
-    if redacted:
+    if reduced:
         metrics.drop("accuracy/time", axis=1, inplace=True)
         metrics.drop("model", axis=1, inplace=True)
         metrics.plot(x='accuracy', y='time', z='storage', kind='scatter', c=colors)
