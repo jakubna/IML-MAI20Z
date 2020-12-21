@@ -1,9 +1,6 @@
 from evaluation.plot import *
 from evaluation.evaluate import *
-from algorithms.reduction.drop3 import drop3_reduction
-from algorithms.reduction.enn import enn_reduction
-from algorithms.reduction.fcnn import fcnn_reduction
-from algorithms.reduction.menn import menn_reduction
+import matplotlib as plt 
 from evaluation.stats import get_best_results
 import pandas as pd
 from algorithms.kNNAlgorithm import kNNAlgorithm
@@ -82,7 +79,7 @@ def best_knn_statistical_comp(name_file_input, name_file_output, reduced):
         plot(name_file_output, reduced)
 
 
-def redact_best_knn(name_file_input, name_file_output, k_x):
+def reduct_best_knn(name_file_input, name_file_output, k_x):
     """
     Apply the reduction and make the analysis of the metrics extracted.
     :param name_file_input: the name of the file on where you want to read the metrics.
