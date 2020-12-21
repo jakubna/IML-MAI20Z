@@ -63,7 +63,7 @@ def best_knn_metrics(k_x: np.ndarray, name_file):
     set_output(df_results, name_file)
 
 
-def best_knn_statistical_comp(name_file_input, name_file_output, redacted):
+def best_knn_statistical_comp(name_file_input, name_file_output, reduced):
     """
     Apply the evaluation of the metrics extracted for each combination of parameters.
     :param name_file_input: the name of the file on where you want to read the metrics.
@@ -71,13 +71,15 @@ def best_knn_statistical_comp(name_file_input, name_file_output, redacted):
     :param redacted: if the statistical comparison is made between redacted data.
     """
     # read the combination metrics
-    metrics = read_csv(name_file_input, redacted)
+    metrics = read_csv(name_file_input, reduced)
 
     # get the bests combinations
-    bests = get_best_results(metrics, redacted)
+    bests = get_best_results(metrics, reduced)
 
     # store the best combinations
     set_output(bests, name_file_output)
+    if not reduced:
+        plot(name_file_output, reduced)
 
 
 def redact_best_knn(name_file_input, name_file_output, k_x):
